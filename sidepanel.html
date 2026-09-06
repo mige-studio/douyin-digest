@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>抖音精读</title><link rel="stylesheet" href="sidepanel.css"></head>
+<body>
+<header><div class="heading"><div><h1 id="videoTitle">准备开始精读</h1><p id="videoAuthor" class="muted"></p></div><a class="library-entry" href="library.html" target="_blank" rel="noopener">我的资料</a><button id="settings">设置</button></div>
+<nav aria-label="阅读模块"><button data-tab="transcript" aria-selected="true">逐字稿</button><button data-tab="overview" aria-selected="false">内容概览</button><button data-tab="notes" aria-selected="false">我的笔记</button></nav></header>
+<p id="status" role="status" aria-live="polite">打开单条公开抖音视频详情页，即可开始。</p>
+<main id="contentArea">
+<section id="transcript" class="panel">
+<div class="toolbar"><button id="read">重新检查字幕</button><button id="current">回到当前</button><button id="speakers" hidden>姓名</button></div>
+<details id="transcriptTools" hidden><summary>逐字稿选项</summary><p class="muted">重新转写可补充说话人，完成后更新全文；已有笔记保留。按整场音频重新计费。</p><button id="retranscribe">重新转写（含说话人）</button></details>
+<div id="generation" class="notice" hidden><p id="generationHint"></p><div id="progressInfo" hidden><progress id="transcriptionProgress" max="100" value="0" aria-label="已转写音频进度"></progress><p id="progressLabel"></p></div><button id="generate" class="primary">开始精读 · 生成逐字稿</button><button id="checkJob" hidden>查询转写结果</button><button id="retryJob" hidden>重新提交（可能再次计费）</button></div>
+<div class="search" role="search"><input id="search" type="search" placeholder="搜索全文关键词" aria-label="搜索逐字稿"><span id="searchCount" aria-live="polite"></span><button id="prev" aria-label="上一个匹配">↑</button><button id="next" aria-label="下一个匹配">↓</button></div>
+<div class="toolbar"><span id="source" class="muted"></span><span class="spacer"></span><button id="copy">复制</button><button id="export">导出</button></div>
+<div id="transcriptList"><p class="empty">逐字稿会显示在这里。视频标题不会被当作逐字稿。</p></div>
+</section>
+<section id="overview" class="panel" hidden><div class="toolbar"><button id="analyze">生成内容概览</button><button id="exportOverview">导出概览</button></div><p id="overviewHint" class="muted">根据逐字稿整理章节和关键观点。</p><h2>内容章节</h2><div id="chapters"></div><h2>关键观点</h2><div id="quotes"></div></section>
+<section id="notes" class="panel" hidden><div class="notes-heading"><h2>已保存笔记</h2><div class="notes-filter" role="group" aria-label="笔记范围"><button id="notesThis" aria-pressed="true">当前视频</button><button id="notesAll" aria-pressed="false">全部笔记</button></div><input id="allNotes" type="checkbox" hidden></div><div id="noteList"></div><div class="toolbar"><button id="exportNotes">导出笔记</button></div><details class="manual-note"><summary>补充个人想法</summary><label for="noteText">记下此刻的想法</label><textarea id="noteText" rows="3" placeholder="写下你的补充想法（可选）"></textarea><button id="addNote">保存想法</button></details></section>
+</main>
+<label class="follow-float"><input type="checkbox" id="follow"><span>跟随播放</span></label>
+<div id="selectionBar" role="toolbar" aria-label="逐字稿选中内容操作" hidden><button id="explain">💡 解释这段</button><button id="noteSelection">📝 记笔记</button></div>
+<dialog id="explanation"><h2>解释这段</h2><p id="explanationText"></p><button id="closeExplanation">关闭</button></dialog>
+<dialog id="speakerDialog"><h2>编辑已有姓名</h2><p id="speakerHint"></p><div id="speakerFields"></div><div class="toolbar"><button id="identifySpeakers" class="primary">自动区分说话人</button><button id="repairSpeakers" hidden>改善待确认段落</button><button id="saveSpeakerNames">保存姓名</button><button id="closeSpeakers">关闭</button></div></dialog>
+<script src="core.js"></script><script src="sidepanel.js"></script>
+</body></html>

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的资料</title><link rel="stylesheet" href="library.css"></head>
+<body><main>
+<header><div><p id="platform" class="eyebrow"></p><h1>我的资料</h1><p class="muted">按视频找回逐字稿、概览和笔记。</p></div><a href="options.html">返回设置</a></header>
+<section id="saveSettings" class="save-bar" aria-labelledby="saveHeading"><div><h2 id="saveHeading">保存到本机</h2><p id="folderName">尚未选择文件夹 · 资料目前保存在这个浏览器中</p></div><div class="actions"><button id="chooseFolder">选择资料文件夹</button><button id="saveAll" class="primary" disabled>保存全部资料</button></div>
+<p class="hint">建议选择“文档 / 精读资料”。自动按平台和视频标题建文件夹；内容相同不重复保存，内容变化另存副本，不覆盖旧文件。不会自动保存到外部文件夹。</p></section>
+<p id="status" role="status" aria-live="polite"></p>
+<div class="search-bar"><label for="search">查找资料</label><input id="search" type="search" placeholder="搜索视频标题或作者"><button id="refresh">刷新列表</button><span id="count" class="muted"></span></div>
+<div class="workspace"><section aria-label="视频资料列表"><div id="list"></div><button id="more" hidden>显示更多</button></section>
+<section id="detail" class="reader" aria-label="资料内容"><p class="empty">选择左侧视频，在这里阅读资料。</p></section></div>
+<details class="help"><summary>资料和导出文件有什么区别？</summary><p>这里读取已有文字，不重新识别或翻译。新版本会把现有缓存和后续保存的内容归档到当前浏览器的资料库；旧缓存中已经消失、且没有导出过的全文不能恢复。清除临时逐字稿缓存不会清除资料库。</p><p>只有点击“保存到本机”或“保存全部资料”，才会在你选的文件夹生成文件。两个插件请各选一次同一个“精读资料”文件夹，分别保存到各自的平台目录。</p><p>资料库仍属于当前Chrome用户资料；卸载插件、清理浏览器数据或换机前，请先保存到本机。密钥不进入资料库或导出文件。这里不会扫描、移动或删除你其他文件夹里的文件。</p></details>
+</main><script src="library-config.js"></script><script src="library-core.js"></script><script src="library-db.js"></script><script src="library-files.js"></script><script src="library.js"></script></body></html>

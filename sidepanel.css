@@ -1,0 +1,163 @@
+:root{color-scheme:light;--ink:#242329;--muted:#77737d;--line:#e8e5e9;--accent:#bc4936;--tint:#fff2ed;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;font-size:14px;color:var(--ink);background:#fff}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;height:100vh;display:flex;flex-direction:column;font-family:var(--font-body);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}header{padding:18px 18px 0;border-bottom:1px solid var(--line);flex-shrink:0}.heading{display:flex;align-items:flex-start;gap:12px}.heading>div{flex:1;min-width:0}h1{font-size:16px;line-height:1.6;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}h2{font-size:15px;margin:22px 0 12px}p{line-height:1.7;overflow-wrap:anywhere}.muted{color:var(--muted);font-size:12px}.heading p{margin:5px 0 10px}button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:7px 10px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;line-height:1.4;flex-shrink:0}button:hover{border-color:var(--accent);color:var(--accent)}button:disabled{cursor:default;opacity:.45}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}nav{display:flex;gap:18px;margin-top:10px}nav button{border:none;border-radius:0;padding:12px 0;font-size:14px;background:transparent;border-bottom:2px solid transparent}nav button[aria-selected=true]{border-bottom-color:var(--accent);color:var(--accent);font-weight:600}#status{margin:0;padding:9px 18px;font-size:12px;color:var(--muted);background:#faf9fb;flex-shrink:0}#status.error{color:#a52722;background:#fff0ee}main{overflow:auto;flex:1;padding:14px 18px 110px;scroll-behavior:auto}.toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}.spacer{flex:1}.check{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}input[type=checkbox]{accent-color:var(--accent)}.search{display:flex;align-items:center;gap:5px;margin:15px 0 12px}.search input{min-width:0;flex:1;padding:9px;border:1px solid var(--line);border-radius:7px;font:inherit}.search span{font-size:12px;white-space:nowrap;color:var(--muted)}.entry{display:flex;align-items:flex-start;gap:10px;padding:12px 7px;border-radius:7px;line-height:1.95}.entry.active{background:var(--tint)}.stamp{font-variant-numeric:tabular-nums;color:var(--accent);border:0;background:transparent;padding:3px 0;width:43px;text-align:left}.entry .text{flex:1;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}.empty{color:var(--muted);font-family:var(--font-reading);font-size:13.5px;line-height:1.7;padding:30px 4px}.notice{background:#faf6f1;border:1px solid #eee1d2;border-radius:9px;padding:12px;margin-bottom:12px}.notice p{font-size:12px;margin:0 0 12px}.notice button{white-space:normal;margin:0 3px 5px 0}mark{background:#fff0a9;color:inherit}mark.current-match{background:#fbc584;outline:1px solid #c88232}.chapter,.quote,.note{border-bottom:1px solid var(--line);padding:12px 0}.chapter h3{font-size:14px;margin:0 0 5px}.chapter p,.quote p,.note p{margin:7px 0;white-space:pre-wrap}.note small{color:var(--muted)}textarea{width:100%;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0;font:14px/1.7 var(--font-reading)}#selectionBar{position:fixed;bottom:12px;left:12px;right:12px;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 24px #0002;padding:12px;background:white;z-index:5}#selectionPreview{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);margin-bottom:8px}#selectionBar .toolbar{margin:0}dialog{width:calc(100% - 32px);max-width:480px;border:1px solid var(--line);border-radius:12px;padding:20px}dialog::backdrop{background:#0004}dialog p{font-family:var(--font-reading);font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:65vh;overflow:auto}a{color:var(--accent)}@media(max-width:340px){header{padding-inline:12px}main{padding-inline:12px}nav{gap:12px}button{padding:7px 8px}#selectionBar .toolbar{gap:5px}}
+
+/* Reading surface and controls aligned with the YouTube edition. */
+:root{--ink:#2e2a24;--muted:#a39a8d;--line:#ece5d9;--accent:#c8674f;--tint:#f3e5de;background:#f7f3ec}
+header{background:#fff;padding:22px 20px 12px;border-bottom:1px solid var(--line)}
+.heading h1{font-size:15px}.heading p{color:#a39a8d}nav{gap:8px;margin-top:22px;margin-bottom:0}nav button{flex:1;border:0;border-radius:999px;padding:10px 8px;font-weight:500;color:#9d9385}nav button[aria-selected=true]{background:#c8674f;color:#fff;box-shadow:0 3px 8px #c8674f33}
+#status{background:#fff;color:#8a8074;padding:5px 20px 9px;font-size:11px}main{background:#f7f3ec;padding:14px 20px 100px}.entry{padding:11px 10px;gap:12px;margin-bottom:2px;line-height:1.55;font-family:var(--font-reading);font-size:13.5px;border-left:2px solid transparent}.entry .text{color:var(--text-secondary)}.entry.active{border-left-color:var(--accent);background:#f3e5de}.stamp{font-size:12px;font-family:ui-monospace,monospace;width:44px}.search input{background:#fffcf8;font:500 12px/1.4 var(--font-body)}.toolbar button{border-radius:999px;background:#fffdf9}.chapter,.quote,.note{border-color:#e8dfd1}button{border-radius:999px}.follow-float{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:4;cursor:pointer}.follow-float input{position:absolute;opacity:0}.follow-float span{display:block;padding:11px 23px;background:#c8674f;color:#fff;border-radius:999px;box-shadow:0 4px 14px #55351e30;font-size:13px;font-weight:600;white-space:nowrap}.follow-float input:checked+span{background:#7c8b6f}.follow-float input:checked+span::before{content:'✓ '}.follow-float input:focus-visible+span{outline:2px solid #9b4a38;outline-offset:3px}body:has(#overview:not([hidden])) .follow-float,body:has(#notes:not([hidden])) .follow-float{display:none}#selectionBar{z-index:5;background:#fffdf9}
+
+#generate{background:#c8674f;color:#fff;border:0;padding:11px 20px;font-size:14px;font-weight:600;margin-top:8px}#generate:hover{background:#b25742}#videoTitle{font-size:15px;line-height:1.6;-webkit-line-clamp:2}#generationHint{font-size:13px;line-height:1.7}
+
+.utterance{flex:1;min-width:0}.speaker-label{display:block;color:#9a6654;font-size:11px;font-weight:600;user-select:none}.speaker-field{display:flex;align-items:center;gap:12px;margin:12px 0}.speaker-field input{flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:7px;font:inherit}
+
+#transcriptionProgress{display:block;width:100%;height:8px;accent-color:var(--accent);margin:8px 0}#progressLabel{font-size:12px;color:#8a8074;margin:8px 0 12px;font-variant-numeric:tabular-nums}
+
+/* Shared reading and quote-note interaction with the YouTube edition. */
+.entry{cursor:pointer}.entry .text{cursor:text}
+#selectionBar{position:fixed;bottom:auto;right:auto;left:0;top:0;display:flex;align-items:center;gap:0;max-width:calc(100vw - 24px);padding:4px;background:#fff;border:1px solid #ece5d9;border-radius:12px;box-shadow:0 5px 20px #372d2026;z-index:20}
+#selectionBar button{flex:1;padding:8px 10px;border:0;border-radius:8px;background:transparent;font-size:12px;font-weight:600}#selectionBar button+button{border-left:1px solid #eee}#selectionBar button:hover{background:#f7f3ec}
+.notes-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 20px}.notes-heading h2{margin:0;font-size:18px;font-weight:600}.notes-filter{display:flex;background:#faf7f1;border-radius:999px;padding:3px}.notes-filter button{border:0;background:transparent;color:#9d9385;padding:5px 12px;font-size:11px}.notes-filter button[aria-pressed=true]{background:#c8674f;color:#fff;box-shadow:0 2px 6px #c8674f33}
+.note{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px;margin:0 0 11px;box-shadow:var(--shadow-sm)}.note-heading{display:flex;align-items:center;gap:10px;margin-bottom:11px;min-width:0}.note-heading small{font-family:var(--font-reading);font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.note-time{color:var(--accent);background:var(--accent-dim);border:0;padding:3px 9px;font-family:var(--font-mono);font-size:11.5px;line-height:1.6}.note .note-text{font-family:var(--font-reading);font-size:14px;line-height:1.65;color:var(--text);margin:0 0 12px}.note-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.note-actions button{font-family:var(--font-body);font-weight:600;font-size:11.5px;color:var(--text-secondary);background:#faf7f1;border:1px solid var(--border);padding:6px 12px;line-height:1.6}.note-actions .note-delete{margin-left:auto}.manual-note{margin-top:20px;color:#8a8074;font-size:12px}.manual-note summary{cursor:pointer;margin-bottom:12px}
+
+/* Overview follows the YouTube 1.3.0 mother style; see docs/READING-STANDARD.md. */
+:root{--surface:#fff;--border:#ece5d9;--text:#2e2a24;--text-secondary:#6b6258;--text-muted:#a39a8d;--accent-dim:rgba(200,103,79,.1);--r-sm:8px;--r-md:12px;--shadow-sm:0 1px 3px rgba(90,80,60,.06);--shadow-md:0 4px 16px rgba(90,80,60,.1);--font-reading:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;--font-body:var(--font-reading);--font-display:var(--font-reading);--font-mono:ui-monospace,monospace;--r-pill:999px}
+#overview h2{font-size:18px;font-weight:600;letter-spacing:-.3px;margin:22px 0 14px}#overview>.toolbar{justify-content:flex-end}#overview .quote-text{margin-top:0}.chapter-content{min-width:0}.chapter-summary{overflow-wrap:anywhere}.chapter-item:focus-visible,.quote-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.quote-timestamp{font-family:var(--font-mono);font-size:11.5px;color:var(--accent)}
+.chapter-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-bottom: 9px;
+  transition: all 0.18s ease;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.chapter-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.chapter-timestamp {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--accent);
+  min-width: 46px;
+  padding: 3px 8px;
+  background: var(--accent-dim);
+  border-radius: var(--r-sm);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.chapter-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chapter-title {
+  font-family: var(--font-reading);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chapter-summary {
+  font-family: var(--font-reading);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.quote-item {
+  border-left: 4px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.quote-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.quote-text {
+  font-family: var(--font-reading);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.quote-original {
+  margin: -2px 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.quote-text::before {
+  content: "\201C";
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 34px;
+  color: var(--accent);
+  line-height: 0;
+  vertical-align: -10px;
+  margin-right: 4px;
+}
+
+.quote-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quote-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* One-click copy and save-note buttons on each quote */
+.quote-copy-btn,
+.quote-save-note-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.quote-copy-btn:hover,
+.quote-save-note-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.quote-save-note-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+
+.library-entry{color:var(--accent);font-size:14px;white-space:nowrap;text-underline-offset:3px;flex-shrink:0}
+/* Dialog text must not inherit the extension browser default size. */
+#explanation h2{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--accent);margin:0 0 16px}

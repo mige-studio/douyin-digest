@@ -1,0 +1,12 @@
+{
+  "name": "douyin-digest",
+  "version": "0.2.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check-release.js",
+    "check:public": "node scripts/check-public.js",
+    "package": "node scripts/package-extension.js"
+  }
+}

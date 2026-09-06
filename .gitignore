@@ -1,0 +1,12 @@
+dist/
+node_modules/
+.DS_Store
+*.log
+.env*
+config.js
+
+# Local project records are not part of the public open-source repository.
+/CLAUDE.md
+/AGENTS.md
+/docs/
+/verification/
