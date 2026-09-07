@@ -4,6 +4,10 @@ English | [简体中文](README.zh-CN.md)
 
 Read timestamped Chinese transcripts beside desktop Douyin videos, distinguish speakers within an episode, search spoken content, generate an overview, explain selections, take notes, and save the results to a local folder you choose.
 
+![Douyin video with the Douyin Digest transcript panel showing timestamped Speaker 1 and Speaker 2 entries](assets/douyin-digest-speaker-transcript.png)
+
+<p align="center"><em>Real desktop Douyin reading view with episode-local speaker labels.</em></p>
+
 This is an independent derivative of Zara Zhang's [YouTube Digest](https://github.com/zarazhangrui/youtube-digest). The original MIT license and copyright notice are preserved. Douyin page support, audio transcription, speaker presentation, and the local reading library are maintained independently by this project. It is not affiliated with or endorsed by Douyin.
 
 ## What it does

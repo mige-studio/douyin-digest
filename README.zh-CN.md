@@ -4,6 +4,10 @@
 
 在电脑端抖音视频旁阅读带时间点的中文逐字稿，区分本期说话人，搜索原话、生成内容概览、解释选段、记录笔记，并把资料保存到自己选择的本机文件夹。
 
+![抖音视频与抖音精读侧栏，逐字稿按时间显示说话人 1 和说话人 2](assets/douyin-digest-speaker-transcript.png)
+
+<p align="center"><em>真实电脑端使用画面：视频、逐字稿与本期说话人同步呈现。</em></p>
+
 这是基于 Zara Zhang 的 [YouTube Digest](https://github.com/zarazhangrui/youtube-digest) 衍生的独立开源项目。保留原项目 MIT 许可和版权说明；抖音适配、音轨转写、说话人呈现和资料管理由本项目独立维护。本项目与抖音官方无隶属关系。
 
 ## 主要能力
