@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "抖音精读",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "minimum_chrome_version": "116",
   "description": "在公开抖音视频旁阅读中文逐字稿、搜索内容、理解观点并保存时间戳笔记。",
   "permissions": [
