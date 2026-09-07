@@ -23,6 +23,12 @@
 
 需要 Chrome 116 或更高版本。
 
+如果你习惯让 AI 帮忙，可以直接把项目链接发给 AI：
+
+```text
+请从 https://github.com/mige-studio/douyin-digest 安装或更新这个 Chrome 扩展。保留现有扩展数据，不要卸载旧版本；完成后告诉我在 Chrome 哪里点“加载已解压的扩展程序”或“重新加载”。不要读取、回显或写入我的 API Key。
+```
+
 1. 在 GitHub 下载源码 ZIP 并解压到一个准备长期保留的文件夹。
 2. 在 Chrome 地址栏输入 `chrome://extensions`，打开右上角“开发者模式”。
 3. 点击“加载已解压的扩展程序”，选择包含 `manifest.json` 的项目文件夹。

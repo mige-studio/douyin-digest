@@ -116,9 +116,10 @@ test('whole recording progress describes the real phase without inventing a reco
  assert.match(h.ids.progressLabel.textContent,/同时识别文字与说话人/);assert.doesNotMatch(h.ids.progressLabel.textContent,/已转写 0:00|%/);
 });
 
-test('definitive failure stops waiting immediately and only offers query for a submitted job',async()=>{
+test('definitive failure without a saved transcript stops waiting and offers the correct recovery actions',async()=>{
  for(const notSubmitted of [true,false]){
   const h=await harness(),send=h.ctx.chrome.runtime.sendMessage;let scheduled=0,cleared=0;
+  vm.runInContext('rows=[];renderTranscript();',h.ctx);
   h.ctx.setTimeout=()=>{scheduled++;return 1;};h.ctx.clearTimeout=()=>{cleared++;};
   h.ctx.chrome.runtime.sendMessage=async m=>m.action==='poll'?{success:true,pending:true,failed:true,notSubmitted,error:'本次处理未完成，请检查音频。',progressDetail:{whole:true,phase:'failed',totalSeconds:30,elapsedSeconds:2}}:send(m);
   await h.ctx.poll();
@@ -128,6 +129,13 @@ test('definitive failure stops waiting immediately and only offers query for a s
   assert.match(h.ids.status.textContent,/已停止自动处理/);
   assert.doesNotMatch(h.ids.generationHint.textContent,/暂时未能连接/);
   assert.equal(scheduled,0);assert.equal(cleared,1);
-  assert.ok(h.ids.transcriptList.textContent.includes('后一句'),'Old readable transcript remains visible');
+  assert.ok(!h.ids.transcriptList.textContent.includes('后一句'));
  }
+});
+test('a failed replacement never covers a saved transcript with a global failure banner',async()=>{
+ const h=await harness(),send=h.ctx.chrome.runtime.sendMessage;let scheduled=0;
+ h.ctx.setTimeout=()=>{scheduled++;return 1;};
+ h.ctx.chrome.runtime.sendMessage=async m=>m.action==='poll'?{success:true,pending:true,failed:true,error:'火山未找到这次任务，尚未取得转写结果。',progressDetail:{whole:true,phase:'failed',totalSeconds:30,elapsedSeconds:2}}:send(m);
+ await h.ctx.poll();
+ assert.equal(h.ids.generation.hidden,true);assert.match(h.ids.status.textContent,/全文已完成/);assert.match(h.ids.status.textContent,/未影响/);assert.equal(h.ids.status.classes.has('error'),false);assert.ok(h.ids.transcriptList.textContent.includes('后一句'));assert.equal(scheduled,0);
 });

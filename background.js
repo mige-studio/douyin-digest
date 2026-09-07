@@ -319,7 +319,10 @@ async function handle(m) {
       }
       await chrome.storage.local.remove(key);return {success:true,replace:!!job?.replace,speakers:!!(job?.enrichSpeakers??job?.speakers)};
     });
-    case 'cache':{const job=(await chrome.storage.local.get(`job_${m.videoId}`))[`job_${m.videoId}`];return {success:true,cache:await cacheGet(m.videoId),pending:!!job,speakersPending:!!(job?.enrichSpeakers??job?.speakers)};}
+    case 'cache':{
+      const job=(await chrome.storage.local.get(`job_${m.videoId}`))[`job_${m.videoId}`],failed=job?.status==='failed';
+      return {success:true,cache:await cacheGet(m.videoId),pending:!!job&&!failed,speakersPending:!!job&&!failed&&!!(job?.enrichSpeakers??job?.speakers),lastAttemptFailed:failed};
+    }
     case 'view':await cacheSet(m.videoId,{scrollTop:Math.max(0,Number(m.scrollTop)||0)});return {success:true};
     case 'analyze':return single(`analysis:${m.videoId}`,async()=>{
       const cached=await cacheGet(m.videoId);if(!cached?.transcript?.length)throw new Error('请先取得逐字稿。');

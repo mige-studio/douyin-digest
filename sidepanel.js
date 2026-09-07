@@ -41,7 +41,7 @@ async function checkContext(){
     try{
       const info=await send('page',{command:'getVideoInfo'},ctx);if(!scoped(ctx))return;
       $('videoTitle').textContent=displayTitle(info.title);$('videoAuthor').textContent=info.channelName||'';
-      if(rows.length){status('全文已完成，已恢复逐字稿与阅读位置。');if(cacheResult.pending||cacheResult.speakersPending)await poll(ctx);return;}
+      if(rows.length){status(cacheResult.lastAttemptFailed?'全文已完成，已恢复逐字稿；上次重新转写未完成，未影响已保存内容。':'全文已完成，已恢复逐字稿与阅读位置。');if(cacheResult.pending||cacheResult.speakersPending)await poll(ctx);return;}
       await readSources(ctx);
     }catch(e){if(scoped(ctx)){
       if(contextAttempts<5){contextRetryAt=Date.now()+1500;status('视频正在加载，稍后自动读取…');}
@@ -76,7 +76,11 @@ async function poll(ctx=context,repeat=true,force=false){
   $('generation').hidden=false;$('generate').hidden=true;$('checkJob').hidden=false;
   if(!result.failed&&!result.uncertain&&!result.timedOut)status('正在生成逐字稿，完成后会自动显示。');
   $('retryJob').hidden=!(result.failed||result.uncertain||result.timedOut);
-  if(result.failed){clearTimeout(pollTimer);$('checkJob').hidden=!!result.notSubmitted||!result.progressDetail?.whole;$('generationHint').textContent=result.error|| (result.mediaForbidden?'转写服务返回音频访问被拒绝，因此尚未生成逐字稿。任务已保留，建议先解决音频来源，避免重复提交消耗额度。':'本次转写未成功，服务未返回逐字稿。任务记录已保留，未自动重新提交。');status('转写未成功，已停止自动处理。',true);return;}
+  if(result.failed){
+    clearTimeout(pollTimer);
+    if(rows.length){$('generation').hidden=true;renderProgress();status('全文已完成，已保留已保存逐字稿；上次重新转写未完成，未影响现有内容。');return;}
+    $('checkJob').hidden=!!result.notSubmitted||!result.progressDetail?.whole;$('generationHint').textContent=result.error|| (result.mediaForbidden?'转写服务返回音频访问被拒绝，因此尚未生成逐字稿。任务已保留，建议先解决音频来源，避免重复提交消耗额度。':'本次转写未成功，服务未返回逐字稿。任务记录已保留，未自动重新提交。');status('转写未成功，已停止自动处理。',true);return;
+  }
   $('generationHint').textContent=result.uncertain?'上次提交结果不确定。为避免重复计费，已停止自动重试。可先检查服务用量，再决定是否重新提交。':result.timedOut?'转写已等待超过 20 分钟。可稍后查询，或确认后重新提交。':'正在生成逐字稿。可以继续观看；关闭侧栏后任务信息仍会保留。';
   if(result.throttled){$('generationHint').textContent='服务暂时限制查询频率。已保留转写任务，约一分钟后自动查询，无需重新提交。';status('转写任务已保留，等待服务允许查询。');}
   if(result.progress&&!result.uncertain&&!result.timedOut)$('generationHint').textContent=result.progress;

@@ -15,6 +15,12 @@ test('reading cache is read-only for every video and never imports sample upload
  }
  assert.equal(JSON.stringify(h.store),before);assert.equal(h.requests.length,0);
 });
+test('a failed replacement job does not make a saved transcript pending again',async()=>{
+ const h=harness();h.store['digest_'+id]={transcript:[{text:'已保存的原文',start:9,duration:2}]};
+ h.store['job_'+id]={status:'failed',enrichSpeakers:true,error:'火山未找到这次任务'};
+ const result=await h.call('cache',{videoId:id});
+ assert.equal(result.cache.transcript[0].text,'已保存的原文');assert.equal(result.pending,false);assert.equal(result.speakersPending,false);assert.equal(result.lastAttemptFailed,true);
+});
 test('embedded note action uses actual playback and exposes no saved text or paid API',async()=>{
  const h=harness();h.ctx.chrome.runtime.sendMessage=async()=>{};h.setPage({currentTime:12});
  h.store['digest_'+id]={transcript:[{text:'缓存中的真实原话',start:8,duration:8}]};

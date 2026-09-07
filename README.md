@@ -22,6 +22,12 @@ This is an independent derivative of Zara Zhang's [YouTube Digest](https://githu
 
 Google Chrome 116 or newer is required.
 
+To use an AI coding assistant, give it the repository URL and ask it to install or update the unpacked extension while preserving the existing extension data. It must not read, reveal, or write your API keys:
+
+```text
+Install or update the Chrome extension from https://github.com/mige-studio/douyin-digest. Preserve the existing extension data and do not uninstall the old version. Then tell me where to click Load unpacked or Reload in Chrome. Do not read, reveal, or write my API keys.
+```
+
 1. Download the source ZIP from GitHub and extract it to a folder you will keep.
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Choose **Load unpacked** and select the project folder containing `manifest.json`.
