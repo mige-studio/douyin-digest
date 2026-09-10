@@ -127,6 +127,17 @@ test('AI output validation drops fabricated out-of-range timestamps and extra fi
  const h=harness(),r=h.ctx.validateAndFixTimestamps({chapters:[{title:'有效',summary:'说明',timestampSeconds:1},{title:'错',timestampSeconds:999}],keyQuotes:[{quote:'原话',timestampSeconds:2,translation:'多余字段'}]},50);
  assert.equal(r.chapters.length,1);assert.equal(r.keyQuotes[0].translation,undefined);
 });
+test('AI requests use only the selected DeepSeek or Volcengine Ark key and endpoint',async()=>{
+ for(const selected of [
+  {settings:{aiProvider:'deepseek',aiApiKey:'deepseek-only',arkApiKey:'ark-unused'},provider:'deepseek',url:'https://api.deepseek.com/chat/completions',key:'deepseek-only',model:'deepseek-v4-flash'},
+  {settings:{aiProvider:'ark',aiApiKey:'deepseek-unused',arkApiKey:'ark-only'},provider:'ark',url:'https://ark.cn-beijing.volces.com/api/v3/chat/completions',key:'ark-only',model:'ep-20260130101355-jzs66'},
+ ]){
+  const h=harness();h.store.dyd_settings=selected.settings;let request;
+  h.ctx.fetch=async(url,options)=>{request={url,options};return {ok:true,status:200,text:async()=>JSON.stringify({choices:[{message:{content:'ok'}}]})};};
+  const result=await h.ctx.requestAiCompletion({messages:[{role:'user',content:'test'}],maxTokens:8});
+  assert.equal(result.provider,selected.provider);assert.equal(result.text,'ok');assert.equal(request.url,selected.url);assert.equal(request.options.headers.Authorization,`Bearer ${selected.key}`);assert.equal(JSON.parse(request.options.body).model,selected.model);
+ }
+});
 test('reading positions are persisted per video',async()=>{const h=harness();await h.call('view',{scrollTop:345});assert.equal((await h.call('cache')).cache.scrollTop,345);assert.equal(await h.ctx.cacheGet(other),null);});
 test('Volc submission keeps UUID through uncertain response and recovers by query without rebilling',async()=>{
  const h=harness();h.store.dyd_settings={volcApiKey:'placeholder-only',transcriptionProvider:'volc'};

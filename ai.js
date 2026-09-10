@@ -61,15 +61,17 @@ async function requestAiCompletion({
   responseFormat,
 }) {
   const settings = await getSettings();
-  if (!settings.aiApiKey) {
+  const selectedAi = DYD_SETTINGS.selectedAi(settings);
+  if (!selectedAi.apiKey) {
     const error = new Error(
-      "尚未配置 DeepSeek API 密钥，请打开 抖音精读 设置。",
+      `尚未配置${selectedAi.label} API 密钥，请打开 抖音精读 设置。`,
     );
     error.code = "NO_AI_KEY";
+    error.providerLabel = selectedAi.label;
     throw error;
   }
   const body = {
-    model: settings.aiModel,
+    model: selectedAi.model,
     max_tokens: maxTokens,
     messages,
   };
@@ -104,52 +106,56 @@ async function requestAiCompletion({
   resetIdleTimeout();
   try {
     const response = await fetch(
-      DYD_SETTINGS.chatCompletionsUrl(),
+      selectedAi.chatCompletionsUrl,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${settings.aiApiKey}`,
+          Authorization: `Bearer ${selectedAi.apiKey}`,
         },
         body: JSON.stringify(body),
         signal: controller.signal,
       },
     );
-    // Receiving headers proves DeepSeek is still making progress. DeepSeek
-    // may then send blank-line body chunks while a non-streaming request queues.
+    // Receiving headers proves the selected provider is still making progress.
+    // It may then send blank-line body chunks while a request queues.
     resetIdleTimeout();
 
-    const data = await readBoundedAiResponse(response, resetIdleTimeout);
+    const data = await readBoundedAiResponse(response, resetIdleTimeout, selectedAi.label);
     if (!response.ok) {
       const errorData = data && typeof data === "object" ? data : {};
       const error = new Error(
-        `DeepSeek 请求失败（${response.status}），请检查设置、余额或稍后重试。`,
+        `${selectedAi.label} 请求失败（${response.status}），请检查设置、余额或稍后重试。`,
       );
       error.status = response.status;
+      error.providerLabel = selectedAi.label;
       throw error;
     }
 
     const text = data.choices?.[0]?.message?.content;
     if (typeof text !== "string" || !text.trim()) {
-      const error = new Error("DeepSeek 返回了空结果，请重试。");
+      const error = new Error(`${selectedAi.label} 返回了空结果，请重试。`);
       error.code = "EMPTY_AI_RESPONSE";
+      error.providerLabel = selectedAi.label;
       throw error;
     }
 
-    return { text, settings };
+    return { text, settings, provider: selectedAi.id };
   } catch (error) {
     if (timeoutKind === "idle") {
       const timeoutError = new Error(
-        "DeepSeek 连续 50 秒没有返回内容，请重试。",
+        `${selectedAi.label} 连续 50 秒没有返回内容，请重试。`,
       );
       timeoutError.code = "AI_IDLE_TIMEOUT";
+      timeoutError.providerLabel = selectedAi.label;
       throw timeoutError;
     }
     if (timeoutKind === "hard") {
       const timeoutError = new Error(
-        "DeepSeek 请求超过 120 秒，请重试。",
+        `${selectedAi.label} 请求超过 120 秒，请重试。`,
       );
       timeoutError.code = "AI_HARD_TIMEOUT";
+      timeoutError.providerLabel = selectedAi.label;
       throw timeoutError;
     }
     throw error;
@@ -159,7 +165,7 @@ async function requestAiCompletion({
   }
 }
 
-async function readBoundedAiResponse(response, onActivity) {
+async function readBoundedAiResponse(response, onActivity, providerLabel = "AI 服务") {
   const reader = response.body?.getReader?.();
   if (reader) {
     const decoder = new TextDecoder();
@@ -168,13 +174,13 @@ async function readBoundedAiResponse(response, onActivity) {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      // Every received chunk is activity, including DeepSeek's blank lines.
+      // Every received chunk is activity, including blank lines.
       onActivity();
       const byteLength = value?.byteLength ?? 0;
       responseBytes += byteLength;
       if (responseBytes > AI_PROVIDER_MAX_RESPONSE_BYTES) {
         await reader.cancel?.().catch(() => {});
-        const error = new Error("DeepSeek 返回内容过大，已超过 2 MiB 限制。" );
+        const error = new Error(`${providerLabel} 返回内容过大，已超过 2 MiB 限制。`);
         error.code = "AI_RESPONSE_TOO_LARGE";
         throw error;
       }
@@ -191,7 +197,7 @@ async function readBoundedAiResponse(response, onActivity) {
     onActivity();
     const byteLength = new TextEncoder().encode(responseText).byteLength;
     if (byteLength > AI_PROVIDER_MAX_RESPONSE_BYTES) {
-      const error = new Error("DeepSeek 返回内容过大，已超过 2 MiB 限制。" );
+      const error = new Error(`${providerLabel} 返回内容过大，已超过 2 MiB 限制。`);
       error.code = "AI_RESPONSE_TOO_LARGE";
       throw error;
     }
@@ -231,11 +237,11 @@ function parseLooseJson(text) {
 }
 
 // ============================================================
-// DEEPSEEK ANALYSIS
+// AI ANALYSIS
 // ============================================================
 
 /**
- * Sends the transcript to DeepSeek for analysis.
+ * Sends the transcript to the selected AI provider for analysis.
  *
  * The prompt asks the model to produce chapters covering the whole video
  * and 3-5 key quotes with timestamps.
@@ -254,11 +260,12 @@ async function handleAnalyzeTranscript(
 ) {
   try {
     const settings = await getSettings();
-    if (!settings.aiApiKey) {
+    const selectedAi = DYD_SETTINGS.selectedAi(settings);
+    if (!selectedAi.apiKey) {
       return {
         success: false,
         error: "NO_AI_KEY",
-        message: "尚未配置 DeepSeek API 密钥，请打开 抖音精读 设置。",
+        message: `尚未配置${selectedAi.label} API 密钥，请打开 抖音精读 设置。`,
       };
     }
 
@@ -312,7 +319,7 @@ async function handleAnalyzeTranscript(
       promptVariables,
     );
 
-    debugLog("[抖音精读] Requesting video analysis", settings.aiModel);
+    debugLog("[抖音精读] Requesting video analysis", selectedAi.id, selectedAi.model);
     const { text: responseText } = await requestAiCompletion({
       maxTokens: 8192,
       responseFormat: { type: "json_object" },
@@ -335,18 +342,19 @@ async function handleAnalyzeTranscript(
     };
   } catch (error) {
     void 0;
+    const providerLabel = error.providerLabel || "AI 服务";
     if (error.status === 401) {
       return {
         success: false,
         error: "INVALID_AI_KEY",
-        message: "DeepSeek 拒绝了这把 API 密钥，请检查后重新填写。",
+        message: `${providerLabel} 拒绝了这把 API 密钥，请检查后重新填写。`,
       };
     }
     if (error.status === 429) {
       return {
         success: false,
         error: "RATE_LIMITED",
-        message: "DeepSeek 当前请求过多，请稍后重试。",
+        message: `${providerLabel} 当前请求过多，请稍后重试。`,
       };
     }
     return {
@@ -360,7 +368,7 @@ async function handleAnalyzeTranscript(
  * Validates all timestamps in the analysis and fixes any that exceed video duration.
  * This is a safety net to prevent hallucinated timestamps from reaching the UI.
  *
- * @param {Object} analysis - The parsed analysis from DeepSeek
+ * @param {Object} analysis - The parsed analysis from the selected AI provider
  * @param {number} maxSeconds - Maximum valid timestamp in seconds
  * @returns {Object} - Analysis with validated timestamps
  */
@@ -440,11 +448,12 @@ async function handleExplainSelection(
 ) {
   try {
     const settings = await getSettings();
-    if (!settings.aiApiKey) {
+    const selectedAi = DYD_SETTINGS.selectedAi(settings);
+    if (!selectedAi.apiKey) {
       return {
         success: false,
         error: "NO_AI_KEY",
-        message: "尚未配置 DeepSeek API 密钥。",
+        message: `尚未配置${selectedAi.label} API 密钥。`,
       };
     }
 

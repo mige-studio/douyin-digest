@@ -40,7 +40,7 @@ After updating the source, reload the Douyin Digest card on the extensions page 
 ## Providers
 
 - Volcengine Speech transcribes videos without usable captions and returns timestamps and episode-local speaker labels. Select a recording-recognition version actually enabled for your account. Usage may be billed.
-- DeepSeek generates overviews and selected-text explanations.
+- DeepSeek or Volcengine Ark (choose one) generates overviews and selected-text explanations.
 - Supadata remains an optional transcript provider. Availability and pricing are controlled by the provider.
 
 The extension includes no API credit. Provider data handling and fees remain subject to each provider's terms.

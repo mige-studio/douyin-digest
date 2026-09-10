@@ -33,8 +33,16 @@ test('playback boundaries return correct transcript segment',()=>{
  const rows=[{start:1},{start:3},{start:8}];assert.equal(D.activeIndex(rows,0),-1);assert.equal(D.activeIndex(rows,3),1);assert.equal(D.activeIndex(rows,99),2);assert.equal(D.activeIndex([],2),-1);
 });
 test('settings cannot send keys to a changed endpoint',()=>{
- const settings=S.normalize({aiBaseUrl:'https://evil.com',aiModel:'evil',aiApiKey:' value ',supadataApiKey:' test '});
- assert.equal(settings.aiBaseUrl,'https://api.deepseek.com');assert.equal(settings.aiApiKey,'value');assert.equal(S.STORAGE_KEY,'dyd_settings');
+ const settings=S.normalize({aiProvider:'evil',aiBaseUrl:'https://evil.com',aiModel:'evil',aiApiKey:' value ',arkApiKey:' ark ',supadataApiKey:' test '});
+ const selected=S.selectedAi(settings);
+ assert.equal(settings.aiProvider,'deepseek');assert.equal(selected.chatCompletionsUrl,'https://api.deepseek.com/chat/completions');assert.equal(selected.model,'deepseek-v4-flash');assert.equal(selected.apiKey,'value');assert.equal(S.STORAGE_KEY,'dyd_settings');
+});
+
+test('AI analysis selects exactly one fixed provider configuration',()=>{
+ const deepseek=S.selectedAi({aiApiKey:'deepseek-key',arkApiKey:'ark-key'});
+ assert.equal(deepseek.id,'deepseek');assert.equal(deepseek.apiKey,'deepseek-key');assert.equal(deepseek.chatCompletionsUrl,'https://api.deepseek.com/chat/completions');
+ const ark=S.selectedAi({aiProvider:'ark',aiApiKey:'deepseek-key',arkApiKey:'ark-key',baseUrl:'https://evil.com',model:'evil'});
+ assert.equal(ark.id,'ark');assert.equal(ark.apiKey,'ark-key');assert.equal(ark.chatCompletionsUrl,'https://ark.cn-beijing.volces.com/api/v3/chat/completions');assert.equal(ark.model,'ep-20260130101355-jzs66');
 });
 
 test('modal video routes preserve active ID and reject ambiguous parameters',()=>{
