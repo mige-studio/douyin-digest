@@ -66,7 +66,7 @@ async function writeCache(id,patch) {
   await chrome.storage.local.set({[`digest_${id}`]:record});
   return record;
 }
-function publicInfo(info) {return {videoId:info.videoId,title:String(info.title||'').slice(0,1000),channelName:String(info.channelName||'').slice(0,300),description:String(info.description||'').slice(0,4000),duration:Number(info.duration)||0};}
+function publicInfo(info) {return {videoId:info.videoId,title:String(info.title||'').slice(0,1000),channelName:String(info.channelName||'').slice(0,300),description:String(info.description||'').slice(0,4000),duration:Number(info.duration)||0,engagement:DYD.engagement(info.engagement)};}
 function inferredNames(rows,info) {
   // Only explicit self-introduction corroborated by this video's metadata. Never infer identity from speaking order.
   const metadata=[info.title,info.channelName,info.description].join(' '),candidates=new Map();

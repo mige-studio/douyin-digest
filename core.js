@@ -60,6 +60,24 @@ var DYD = (() => {
     }
     return null;
   }
+  function engagement(raw) {
+    const source=raw?.statistics||raw?.stats||raw;
+    if(!source||typeof source!=='object')return null;
+    const count=(...keys)=>{
+      for(const key of keys)if(source[key]!==undefined&&source[key]!==null&&source[key]!==''){
+        const value=Number(source[key]);
+        if(Number.isFinite(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER)return Math.floor(value);
+      }
+      return null;
+    };
+    const result={
+      likes:count('likes','diggCount','digg_count','likeCount','like_count'),
+      comments:count('comments','commentCount','comment_count'),
+      favorites:count('favorites','collectCount','collect_count','favoriteCount','favorite_count'),
+      shares:count('shares','shareCount','share_count')
+    };
+    return Object.values(result).some(Number.isFinite)?result:null;
+  }
   function metadata(item) {
     if (!item) return null;
     const video = item.video || {};
@@ -67,7 +85,7 @@ var DYD = (() => {
       ...(video.bit_rate || []).flatMap(x => x.play_addr?.url_list || [])];
     return {title: String(item.desc || '').slice(0, 1000), channelName: String(item.author?.nickname || '').slice(0, 300),
       description: String(item.desc || '').slice(0, 4000), duration: Number(video.duration || 0)/1000,
-      mediaUrl: candidates.map(mediaUrl).find(Boolean) || ''};
+      mediaUrl: candidates.map(mediaUrl).find(Boolean) || '',engagement:engagement(item)};
   }
   function matches(rows, query) {
     const q = query.trim().toLocaleLowerCase(); if (!q) return [];
@@ -102,6 +120,6 @@ var DYD = (() => {
     });
     return {...analysis,chapters,keyQuotes,keyMoments:analysis.keyMoments.map(anchor).filter(t=>t!==null)};
   }
-  return {videoId,canonical,link,time,mediaUrl,normalize,readable,transcriptText,findVideo,metadata,matches,activeIndex,anchorAnalysis};
+  return {videoId,canonical,link,time,mediaUrl,normalize,readable,transcriptText,findVideo,engagement,metadata,matches,activeIndex,anchorAnalysis};
 })();
 if (typeof module !== 'undefined') module.exports = DYD;

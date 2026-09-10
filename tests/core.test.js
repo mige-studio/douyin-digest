@@ -16,9 +16,14 @@ test('caption normalization rejects invalid timestamps and keeps subsecond preci
  assert.equal(D.transcriptText([{text:'你好',start:65}]),'[1:05] 你好');
 });
 test('metadata must match current video ID, not recommendation card',()=>{
- const root={recommendations:[{aweme_id:'7339830617644829991',desc:'错视频',video:{}}],current:{aweme_id:id,desc:'正确视频',author:{nickname:'作者'},video:{duration:5000,play_addr:{url_list:['https://v3.douyinvod.com/a']}}}};
+ const root={recommendations:[{aweme_id:'7339830617644829991',desc:'错视频',video:{}}],current:{aweme_id:id,desc:'正确视频',author:{nickname:'作者'},statistics:{digg_count:2373,comment_count:31,collect_count:1060,share_count:450},video:{duration:5000,play_addr:{url_list:['https://v3.douyinvod.com/a']}}}};
  assert.equal(D.metadata(D.findVideo(root,id)).title,'正确视频');assert.equal(D.metadata(D.findVideo(root,id)).duration,5);
+ assert.deepEqual(D.metadata(D.findVideo(root,id)).engagement,{likes:2373,comments:31,favorites:1060,shares:450});
  assert.equal(D.findVideo(root,'7668339746930788179'),null);
+});
+test('engagement accepts both Douyin field styles and rejects unsafe counts',()=>{
+ assert.deepEqual(D.engagement({statistics:{diggCount:'2373',commentCount:31,collectCount:1060,shareCount:450}}),{likes:2373,comments:31,favorites:1060,shares:450});
+ assert.equal(D.engagement({statistics:{diggCount:-1,commentCount:'not-a-number'}}),null);
 });
 test('Chinese search finds every occurrence, including repeated terms',()=>{
  assert.deepEqual(D.matches([{text:'中文中文'},{text:'读中文'}],'中文'),[{index:0,offset:0,length:2},{index:0,offset:2,length:2},{index:1,offset:1,length:2}]);

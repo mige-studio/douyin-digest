@@ -18,7 +18,10 @@
           const media=candidates.map(x=>typeof x==='string'?x:x?.src).find(u=>{
             try{const p=new URL(u,location.origin);return p.protocol==='https:'&&p.hostname.endsWith('.douyinvod.com');}catch{return false;}
           })||'';
-          return {videoId:id,title:String(item.desc||'').slice(0,1000),channelName:String(item.authorInfo?.nickname||'').slice(0,300),description:String(item.desc||'').slice(0,4000),duration:Number(data.duration||0)/1000,mediaUrl:media};
+          const stats=item.statistics||item.stats||{};
+          const count=(...keys)=>{for(const key of keys)if(stats[key]!==undefined&&stats[key]!==null&&stats[key]!==''){const value=Number(stats[key]);if(Number.isFinite(value)&&value>=0&&value<=Number.MAX_SAFE_INTEGER)return Math.floor(value);}return null;};
+          const engagement={likes:count('diggCount','digg_count','likeCount','like_count'),comments:count('commentCount','comment_count'),favorites:count('collectCount','collect_count','favoriteCount','favorite_count'),shares:count('shareCount','share_count')};
+          return {videoId:id,title:String(item.desc||'').slice(0,1000),channelName:String(item.authorInfo?.nickname||'').slice(0,300),description:String(item.desc||'').slice(0,4000),duration:Number(data.duration||0)/1000,mediaUrl:media,...(Object.values(engagement).some(Number.isFinite)?{engagement}:{})};
         }
       }
     }

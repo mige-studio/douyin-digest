@@ -24,7 +24,7 @@
   document.addEventListener('dyd-player-data',event=>{
     try{if(typeof event.detail!=='string'||event.detail.length>24000)return;
       const d=JSON.parse(event.detail);if(!d||d.videoId!==currentId)return;
-      liveMetadata={title:String(d.title||'').slice(0,1000),channelName:String(d.channelName||'').slice(0,300),description:String(d.description||'').slice(0,4000),duration:Number(d.duration)||0,mediaUrl:DYD.mediaUrl(d.mediaUrl||'')};
+      liveMetadata={title:String(d.title||'').slice(0,1000),channelName:String(d.channelName||'').slice(0,300),description:String(d.description||'').slice(0,4000),duration:Number(d.duration)||0,mediaUrl:DYD.mediaUrl(d.mediaUrl||''),engagement:DYD.engagement(d.engagement)};
     }catch{}
   });
   function embedded() {
@@ -45,7 +45,7 @@
     const meta=name=>document.querySelector(`meta[property="${name}"]`)?.content || '';
     const title=data?.title || (meta('og:title') || document.title).replace(/\s*[-|]\s*抖音.*$/,'').trim();
     // Author is optional: never guess from recommendation links.
-    return {videoId:currentId,title,channelName:data?.channelName||'',description:data?.description||'',
+    return {videoId:currentId,title,channelName:data?.channelName||'',description:data?.description||'',engagement:DYD.engagement(data?.engagement),
       duration:Number.isFinite(v?.duration)?v.duration:data?.duration||0,
       mediaUrl:data?.mediaUrl||DYD.mediaUrl(v?.currentSrc||v?.src||'')||'',ready:!!v};
   }

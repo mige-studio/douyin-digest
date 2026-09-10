@@ -9,8 +9,9 @@ function read(item,search=''){
   listeners['dyd-read-player']();return result;
 }
 test('public React player metadata reads src objects and prefers audio',()=>{
- const result=read({awemeId:id,desc:'真实标题',authorInfo:{nickname:'作者'},video:{duration:261248,playAddr:[{src:'https://v3.douyinvod.com/video'}],bitRateAudioList:[{urlList:[{src:'https://v3.douyinvod.com/audio'}]}]}});
+ const result=read({awemeId:id,desc:'真实标题',authorInfo:{nickname:'作者'},statistics:{diggCount:2373,commentCount:31,collectCount:1060,shareCount:450},video:{duration:261248,playAddr:[{src:'https://v3.douyinvod.com/video'}],bitRateAudioList:[{urlList:[{src:'https://v3.douyinvod.com/audio'}]}]}});
  assert.equal(result.videoId,id);assert.equal(result.mediaUrl,'https://v3.douyinvod.com/audio');assert.equal(result.duration,261.248);
+ assert.deepEqual(result.engagement,{likes:2373,comments:31,favorites:1060,shares:450});
 });
 test('another video and unapproved media origins are never returned',()=>{
  assert.equal(read({awemeId:'7339830617644829991',video:{}}),null);

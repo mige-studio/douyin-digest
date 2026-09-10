@@ -15,6 +15,7 @@ This is an independent derivative of Zara Zhang's [YouTube Digest](https://githu
 - Uses readable captions when available, or submits the complete public-video audio track to Volcengine Speech when transcription is requested.
 - Shows sentence timestamps and episode-local labels such as Speaker 1 and Speaker 2, with optional names for that video.
 - Supports transcript search, timestamp seeking, follow-along reading, AI overviews, selected-text explanations, and timestamped notes.
+- Shows the current video's like, comment, favorite, and share counts, plus a like-based relative ratio with likes set to 100.
 - Provides a local library that saves transcripts, overviews, and notes as Markdown under a folder chosen by the user.
 - Stores keys, settings, recent results, and notes in the current Chrome extension profile. The project operates no relay server, analytics, or telemetry.
 

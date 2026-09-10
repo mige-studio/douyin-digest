@@ -27,6 +27,17 @@ async function harness(){
 test('sidepanel opens cached Chinese transcript and restores reading position without an API request',async()=>{
  const h=await harness();assert.equal(h.ids.videoTitle.textContent,'中文样本');assert.equal(h.ids.speakers.hidden,true);assert.equal(h.ids.contentArea.scrollTop,240);assert.equal(h.ids.transcriptList.querySelectorAll('.entry').length,2);assert.ok(!h.sent.some(m=>m.action==='generate'||m.action==='analyze'));
 });
+test('current video engagement keeps raw counts and shows likes-based proportions',async()=>{
+ const h=await harness();h.ctx.renderEngagement({likes:2373,comments:31,favorites:1060,shares:450});
+ assert.equal(h.ids.engagement.hidden,false);assert.deepEqual(h.ids.engagementCounts.querySelectorAll('.engagement-item').map(x=>x.textContent),['点赞2,373相对 100','评论31相对 1.3','收藏1,060相对 44.7','转发450相对 19.0']);
+ assert.deepEqual(h.ids.engagementCounts.querySelectorAll('.engagement-relative').map(x=>x.textContent),['相对 100','相对 1.3','相对 44.7','相对 19.0']);
+ h.ctx.renderEngagement(null);assert.equal(h.ids.engagement.hidden,true);
+});
+test('engagement strip is inside the scrolling content instead of the fixed header',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../sidepanel.html'),'utf8');
+ assert.ok(html.indexOf('<main id="contentArea">')<html.indexOf('<section id="engagement"'));
+ assert.ok(html.indexOf('<section id="engagement"')<html.indexOf('<section id="transcript"'));
+});
 test('search highlights all matches and next/previous never seek playback',async()=>{
  const h=await harness();h.ids.search.value='中文';h.ctx.updateSearch();assert.equal(h.ids.searchCount.textContent,'1/2');h.ids.next.click();assert.equal(h.ids.searchCount.textContent,'2/2');assert.ok(!h.sent.some(m=>m.command==='seek'));
 });

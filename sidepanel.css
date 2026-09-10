@@ -159,5 +159,7 @@ header{background:#fff;padding:22px 20px 12px;border-bottom:1px solid var(--line
 
 
 .library-entry{color:var(--accent);font-size:14px;white-space:nowrap;text-underline-offset:3px;flex-shrink:0}
+.engagement{margin:0 0 10px;padding:7px 10px;background:#fffdf9;border:1px solid var(--border);border-radius:9px}.engagement-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.engagement-item{display:flex;flex-direction:column;min-width:0;line-height:1.2}.engagement-item small{font-size:10px;color:var(--text-muted)}.engagement-item strong{margin-top:2px;font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}.engagement-relative{margin-top:2px;font-size:9.5px;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+header{padding:14px 20px 0}.heading p{margin:2px 0 0}.heading h1{line-height:1.45}nav{margin-top:10px}nav button{padding:8px}#status{padding:4px 20px 6px}main{padding-top:10px}
 /* Dialog text must not inherit the extension browser default size. */
 #explanation h2{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--accent);margin:0 0 16px}

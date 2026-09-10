@@ -21,6 +21,17 @@ async function run(button,fn){
 function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
 function button(text,fn,className){const node=el('button',text,className);node.type='button';node.onclick=fn;return node;}
 function stamp(seconds,fn){return button(DYD.time(seconds),fn,'stamp');}
+function renderEngagement(raw){
+  const data=DYD.engagement(raw),host=$('engagement'),counts=$('engagementCounts');
+  host.hidden=!data;counts.replaceChildren();if(!data)return;
+  const labels=[['likes','点赞'],['comments','评论'],['favorites','收藏'],['shares','转发']];
+  const relative=key=>Number.isFinite(data[key])?(data[key]/data.likes*100).toFixed(1):'—';
+  for(const [key,label] of labels){
+    const item=el('span',undefined,'engagement-item'),value=Number.isFinite(data[key])?data[key].toLocaleString('zh-CN'):'—';
+    const ratio=data.likes>0?(key==='likes'?'100':relative(key)):'—';
+    item.append(el('small',label),el('strong',value),el('span','相对 '+ratio,'engagement-relative'));counts.append(item);
+  }
+}
 async function seek(seconds,ctx=context){try{await send('page',{command:'seek',seconds},ctx);}catch(e){if(scoped(ctx))status(e.message,true);}}
 async function checkContext(){
   if(contextBusy)return;contextBusy=true;
@@ -33,14 +44,14 @@ async function checkContext(){
     saveView();lastContextKey=key;epoch++;context=id?{tabId:tab.id,videoId:id}:null;
     clearTimeout(pollTimer);speakerNames={};$('speakerDialog').close();rows=[];analysis=null;selected=null;lastActive=-1;transcriptScroll=0;
     $('selectionBar').hidden=true;$('generation').hidden=true;renderProgress();$('videoTitle').textContent=id?'正在识别视频…':'准备开始精读';
-    $('videoAuthor').textContent='';$('source').textContent='';$('search').value='';$('contentArea').scrollTop=0;
+    $('videoAuthor').textContent='';renderEngagement(null);$('source').textContent='';$('search').value='';$('contentArea').scrollTop=0;
     $('explanation').close();renderTranscript();renderAnalysis();await refreshNotes();
     if(!context){status('请在抖音打开要读的节目，支持搜索结果、作者主页弹层和视频详情页。');return;}
     const ctx={...context},cacheResult=await send('cache',{},ctx);if(!scoped(ctx))return;
     if(cacheResult.cache){const c=cacheResult.cache;transcriptRevision=c.transcriptRevision||'legacy';speakerNames=c.speakerNames||{};rows=c.transcript||[];analysis=c.analysis||null;$('videoTitle').textContent=displayTitle(c.title);$('videoAuthor').textContent=c.channelName||'';$('source').textContent=c.source||'';renderTranscript();renderAnalysis();transcriptScroll=c.scrollTop||0;if(activeTab==='transcript')$('contentArea').scrollTop=transcriptScroll;}
     try{
       const info=await send('page',{command:'getVideoInfo'},ctx);if(!scoped(ctx))return;
-      $('videoTitle').textContent=displayTitle(info.title);$('videoAuthor').textContent=info.channelName||'';
+      $('videoTitle').textContent=displayTitle(info.title);$('videoAuthor').textContent=info.channelName||'';renderEngagement(info.engagement);
       if(rows.length){status(cacheResult.lastAttemptFailed?'全文已完成，已恢复逐字稿；上次重新转写未完成，未影响已保存内容。':'全文已完成，已恢复逐字稿与阅读位置。');if(cacheResult.pending||cacheResult.speakersPending)await poll(ctx);return;}
       await readSources(ctx);
     }catch(e){if(scoped(ctx)){
@@ -53,7 +64,7 @@ async function checkContext(){
 async function readSources(ctx=context){
   if(!ctx)throw new Error('请先打开单条公开抖音视频详情页。');
   status('正在读取页面字幕…');const result=await send('sources',{},ctx);if(!scoped(ctx))return;
-  if(result.info){$('videoTitle').textContent=displayTitle(result.info.title);$('videoAuthor').textContent=result.info.channelName||'';}
+  if(result.info){$('videoTitle').textContent=displayTitle(result.info.title);$('videoAuthor').textContent=result.info.channelName||'';renderEngagement(result.info.engagement);}
   if(result.transcript){await loadTranscriptResult(result,ctx);return;}
   $('generation').hidden=false;$('generate').hidden=false;$('checkJob').hidden=true;$('retryJob').hidden=true;
   const provider=await send('provider',{},ctx);if(!scoped(ctx))return;
@@ -63,7 +74,7 @@ async function readSources(ctx=context){
 }
 async function loadTranscriptResult(result,ctx){
   if(!scoped(ctx))return;
-  if(result.info){$('videoTitle').textContent=displayTitle(result.info.title);$('videoAuthor').textContent=result.info.channelName||'';}
+  if(result.info){$('videoTitle').textContent=displayTitle(result.info.title);$('videoAuthor').textContent=result.info.channelName||'';renderEngagement(result.info.engagement);}
   rows=result.transcript;transcriptRevision=result.transcriptRevision||transcriptRevision;speakerNames=result.speakerNames||speakerNames;analysis=null;$('generation').hidden=true;renderProgress();$('source').textContent=result.source||'逐字稿';
   renderTranscript();renderAnalysis();status(`全文已完成，共 ${rows.length} 段原话。`);
   if(activeTab==='overview')await analyze(ctx);
