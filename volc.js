@@ -48,8 +48,15 @@ var DYD_VOLC = (() => {
    if(typeof r.text!=='string'||!r.text.trim()||!Number.isFinite(r.start_time)||!Number.isFinite(r.end_time)||r.start_time<0||r.end_time<=r.start_time||r.end_time>86400000)throw new Error('火山返回的时间点无效，未保存结果。');
    const rawSpeaker=r.additions?.speaker;
    const speaker=typeof rawSpeaker==='number'&&Number.isInteger(rawSpeaker)?String(rawSpeaker):rawSpeaker;
-   return {text:r.text,start:r.start_time/1000,duration:(r.end_time-r.start_time)/1000,...(withWords&&Array.isArray(r.words)?{words:r.words.filter(w=>typeof w.text==='string'&&Number.isFinite(w.start_time)&&Number.isFinite(w.end_time)&&w.end_time>w.start_time).map(w=>({text:w.text,start:w.start_time/1000,duration:(w.end_time-w.start_time)/1000}))}:{}),...(typeof speaker==='string'&&/^\d{1,3}$/.test(speaker)?{localSpeaker:speaker}:{})};
+   const valid=typeof speaker==='string'&&/^\d{1,3}$/.test(speaker);
+   const voiceStatus=rawSpeaker===undefined||rawSpeaker===null||rawSpeaker===''?'missing':speaker==='-1'||speaker==='unknown'?'unresolved':'unsupported';
+   return {text:r.text,start:r.start_time/1000,duration:(r.end_time-r.start_time)/1000,...(withWords&&Array.isArray(r.words)?{words:r.words.filter(w=>typeof w.text==='string'&&Number.isFinite(w.start_time)&&Number.isFinite(w.end_time)&&w.end_time>w.start_time).map(w=>({text:w.text,start:w.start_time/1000,duration:(w.end_time-w.start_time)/1000}))}:{}),...(valid?{localSpeaker:speaker}:{voiceStatus})};
   });
+ }
+ // Official AUC non-meeting policy: one recording, long-audio clustering above
+ // three minutes. This groups voices; it never assigns a person's name.
+ function speakerOptions(duration) {
+  return {enable_speaker_info:true,ssd_version:'200',ssd_mode:Number(duration)>180?1:0};
  }
  async function request(action,key,job,mediaUrl,fetcher=fetch) {
   let options;
@@ -62,7 +69,7 @@ var DYD_VOLC = (() => {
    if(action==='submit'){
     headers['X-Api-Sequence']='-1';
     let audio={url:mediaUrl};
-    body={user:{uid:'douyin-digest'},audio,request:{model_name:'bigmodel',enable_punc:true,enable_itn:true,show_utterances:true,...(job.whole?{enable_speaker_info:true}:{})}};
+    body={user:{uid:'douyin-digest'},audio,request:{model_name:'bigmodel',enable_punc:true,enable_itn:true,show_utterances:true,...(job.whole?speakerOptions(job.audioDuration):{})}};
     if(job.whole)upload=await recordingBody(mediaUrl,body.request);
    }
    options={method:'POST',headers,body:upload||JSON.stringify(body),signal:AbortSignal.timeout(job.whole&&action==='submit'?600000:25000)};
@@ -98,6 +105,6 @@ var DYD_VOLC = (() => {
   const text=await response.text();if(text.length>8000000)throw new Error('火山返回结果过大。');
   const data=JSON.parse(text);return {transcript:rows(data,speakers),durationMs:data.audio_info?.duration};
  }
- return {rows,request,flash,submitOutcome};
+ return {rows,request,flash,submitOutcome,speakerOptions};
 })();
 if(typeof module!=='undefined')module.exports=DYD_VOLC;

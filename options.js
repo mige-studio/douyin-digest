@@ -6,7 +6,7 @@
     try{
       const result=await chrome.runtime.sendMessage({action:'runtimeCheck'});
       if(!result?.success)throw new Error(result?.error||'插件后台未回应。');
-      if(result.protocol!=='whole-resource-3'){runtimeStatus.textContent='本次修复尚未加载，请重新加载“抖音精读”后再检查。';return;}
+      if(result.protocol!=='whole-resource-5'){runtimeStatus.textContent='本次修复尚未加载，请重新加载“抖音精读”后再检查。';return;}
       if(result.resourceId!=='volc.seedasr.auc'){runtimeStatus.textContent='插件后台已连通，但当前不是录音识别 2.0。请选择 2.0 并保存设置。';return;}
       runtimeStatus.textContent=result.busy?'本次修复已加载：录音识别 2.0，另一个节目正在处理。':'本次修复已加载：录音识别 2.0，当前空闲。';
     }catch{runtimeStatus.textContent='插件后台尚未连通。请在扩展程序页重新加载“抖音精读”，再回来检查。';}

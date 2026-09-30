@@ -27,7 +27,7 @@ async function run(m) {
       }
       const checkpoint=await tell('audioWholePrepared',{videoId:m.videoId,runId:m.runId,resourceId:m.resourceId,offset:audio.offset,duration:audio.duration,bytes:audio.buffer.size});
       stage='upload';let rejection;
-      try {await DYD_VOLC.request('submit',m.apiKey,{jobId:m.runId,resourceId:checkpoint.resourceId,whole:true},audio.buffer);}
+      try {await DYD_VOLC.request('submit',m.apiKey,{jobId:m.runId,resourceId:checkpoint.resourceId,whole:true,audioDuration:audio.duration},audio.buffer);}
       catch(e){rejection=e;}
       // The same request can succeed after the submit response times out.
       // Persist queryability even on network uncertainty; never submit again.
@@ -69,18 +69,18 @@ async function run(m) {
 chrome.runtime.onMessage.addListener((m,sender,respond)=>{
   if(sender.id!==chrome.runtime.id||sender.url!==chrome.runtime.getURL('background.js')||m.target!=='audio')return false;
   if(m.action==='audioState'){
-    if(m.resourceId===undefined){respond({success:true,protocol:'whole-resource-3',active});return false;}
+    if(m.resourceId===undefined){respond({success:true,protocol:'whole-resource-5',active});return false;}
     if(!['volc.bigasr.auc','volc.seedasr.auc'].includes(m.resourceId)){respond({success:false,error:'无效的火山识别服务。'});return false;}
     // Exercise the same offscreen-to-background reply bridge used before upload,
     // without audio, credentials, a persisted job or any ASR request.
-    tell('audioPreflight',{protocol:'whole-resource-3',resourceId:m.resourceId}).then(result=>{
-      if(result.protocol!=='whole-resource-3'||result.resourceId!==m.resourceId)throw new Error('插件运行模块不一致，未开始转写。');
-      respond({success:true,protocol:'whole-resource-3',resourceId:result.resourceId,active});
+    tell('audioPreflight',{protocol:'whole-resource-5',resourceId:m.resourceId}).then(result=>{
+      if(result.protocol!=='whole-resource-5'||result.resourceId!==m.resourceId)throw new Error('插件运行模块不一致，未开始转写。');
+      respond({success:true,protocol:'whole-resource-5',resourceId:result.resourceId,active});
     }).catch(()=>respond({success:false,error:'插件运行模块不一致，请重新加载抖音精读。未开始转写。'}));
     return true;
   }
   if(m.action!=='audioStart')return false;
-  if(m.protocol!=='whole-resource-3'||!['volc.bigasr.auc','volc.seedasr.auc'].includes(m.resourceId)){
+  if(m.protocol!=='whole-resource-5'||!['volc.bigasr.auc','volc.seedasr.auc'].includes(m.resourceId)){
     respond({success:false,error:'插件更新尚未生效，请重新加载抖音精读后再试。未开始转写。'});return false;
   }
   if(active){respond({success:false,error:'另一个节目正在生成逐字稿，请等它完成。'});return false;}

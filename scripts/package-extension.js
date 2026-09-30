@@ -1,6 +1,7 @@
 const {root,check}=require('./check-release.js'),fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),assert=require('node:assert/strict');
-const files=check(),version=require('../manifest.json').version;
-assert.match(version,/^\d+\.\d+\.\d+$/);
+const files=check(),manifest=require('../manifest.json'),version=manifest.version_name||manifest.version;
+assert.match(version,/^\d+\.\d+\.\d+(?:-rc\.[1-9]\d*)?$/);
+assert.equal(version.split('-')[0],manifest.version);
 const dist=path.join(root,'dist');fs.mkdirSync(dist,{recursive:true});const temp=fs.mkdtempSync(path.join(dist,'.package-'));
 try{
  const zip=path.join(temp,'douyin-digest.zip');cp.execFileSync('zip',['-X','-q',zip,...files],{cwd:root});

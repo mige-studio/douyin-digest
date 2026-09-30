@@ -13,6 +13,7 @@ var READING_FILES = (() => {
       const stream=await handle.createWritable();
       try{await stream.write(contents);await stream.close();}
       catch(e){try{await stream.abort();}catch{}throw e;}
+      if(await (await handle.getFile()).text()!==contents)throw new Error('本机文件写入后的内容核对未通过，请重新保存；旧文件未覆盖。');
       return {name:filename,written:true};
     }
     throw new Error('同名副本太多，请换一个资料文件夹。');

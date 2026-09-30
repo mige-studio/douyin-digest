@@ -7,12 +7,12 @@ test('new audio runtime rejects stale worker start messages before downloading a
  });
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../offscreen.mjs'),'utf8').replace(/^import .*;\n/gm,''),ctx);
  const sender={id:'test',url:'chrome-extension://test/background.js'};
- for(const fields of [{},{resourceId:'volc.seedasr.auc'},{protocol:'whole-resource-2',resourceId:'volc.seedasr.auc'},{protocol:'whole-resource-3',resourceId:'bad'}]){
+ for(const fields of [{},{resourceId:'volc.seedasr.auc'},{protocol:'whole-resource-2',resourceId:'volc.seedasr.auc'},{protocol:'whole-resource-5',resourceId:'bad'}]){
   listener({target:'audio',action:'audioStart',...fields},sender,r=>reply=r);
   assert.equal(reply.success,false);assert.match(reply.error,/未开始转写/);
  }
  listener({target:'audio',action:'audioState'},sender,r=>reply=r);
- assert.equal(reply.protocol,'whole-resource-3');assert.equal(reply.active,null);
+ assert.equal(reply.protocol,'whole-resource-5');assert.equal(reply.active,null);
 });
 
 test('whole audio submit sends the service frozen in the durable checkpoint to the real transport',async()=>{

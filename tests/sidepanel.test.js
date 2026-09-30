@@ -65,7 +65,7 @@ test('speaker labels and saved names appear in reading and exports without chang
  assert.equal(h.ids.transcriptList.querySelectorAll('.speaker-label')[0].textContent,'张小珺');
  assert.equal(h.ids.transcriptList.querySelectorAll('.text')[0].textContent,'保留原句');
  h.ids.speakers.click();assert.equal(h.ids.identifySpeakers.hidden,true);assert.equal(h.ids.repairSpeakers.hidden,true);assert.equal(h.ids.saveSpeakerNames.hidden,false);
- assert.match(h.ctx.transcriptExport(),/张小珺：保留原句/);assert.match(h.ctx.transcriptExport(),/说话人待确认：无法分开的插话/);
+ assert.match(h.ctx.transcriptExport(),/张小珺 · 声音 s1：保留原句/);assert.match(h.ctx.transcriptExport(),/说话人待确认 · 声音 unknown：无法分开的插话/);
  h.ids.search.value='张小珺';h.ctx.updateSearch();assert.equal(h.ids.searchCount.textContent,'0/0');
 });
 test('progress shows audio duration and elapsed time, hides subtitle recheck only while working',async()=>{

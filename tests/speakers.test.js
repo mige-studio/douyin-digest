@@ -1,5 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const volc=require('../volc.js'),parts=require('../transcript-parts.js');
+test('missing, unresolved and unsupported service voice fields are distinguished without guessing names',()=>{
+ const rows=volc.rows({result:{utterances:[undefined,-1,'arbitrary',0].map((speaker,i)=>({text:'原话',start_time:i*1000,end_time:i*1000+500,additions:{speaker}}))}});
+ assert.deepEqual(rows.map(r=>r.voiceStatus||'valid'),['missing','unresolved','unsupported','valid']);
+ assert.equal(rows[3].localSpeaker,'0');assert.ok(rows.slice(0,3).every(r=>r.localSpeaker===undefined));
+});
 test('speech API requests speaker information explicitly and preserves real speaker zero',async()=>{
  const result=await volc.flash('placeholder','uuid',new Uint8Array([1]),async(url,options)=>{
   assert.equal(JSON.parse(options.body).request.enable_speaker_info,true);

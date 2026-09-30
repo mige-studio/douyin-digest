@@ -84,7 +84,7 @@ function namedNote(note,names) {
 async function acceptTranscript(id,rows,info,source,revision) {
   return serialized(()=>writeTranscript(id,rows,info,source,revision));
 }
-async function writeTranscript(id,rows,info,source,revision) {
+async function writeTranscript(id,rows,info,source,revision,recognition=null) {
   const normalized=DYD.normalize(rows),transcript=source==='语音转写'?DYD.readable(normalized):normalized;
   if(!transcript.length)throw new Error('没有取得带时间点的逐字稿。请确认视频有人声，或稍后重试。');
   const size=new TextEncoder().encode(JSON.stringify(transcript)).length;
@@ -93,7 +93,7 @@ async function writeTranscript(id,rows,info,source,revision) {
   const unchanged=JSON.stringify(old?.transcript)===JSON.stringify(transcript);
   const transcriptRevision=unchanged?(old?.transcriptRevision||'legacy'):(revision||crypto.randomUUID());
   const speakerNames=unchanged?(old?.speakerNames||{}):inferredNames(transcript,info);
-  await writeCache(id,{...publicInfo(info),transcript,source,transcriptRevision,speakerNames,speakerRevision:transcript.some(r=>/^s\d+$/.test(r.speaker))?1:0,analysis:unchanged?old?.analysis:null});
+  await writeCache(id,{...publicInfo(info),transcript,source,transcriptRevision,speakerNames,recognition:recognition||(unchanged?old?.recognition:null),speakerRevision:transcript.some(r=>/^s\d+$/.test(r.speaker))?1:0,analysis:unchanged?old?.analysis:null});
   return {success:true,transcript,transcriptRevision,speakerNames,source,info:publicInfo(info)};
 }
 async function loadSources(m) {
@@ -115,8 +115,9 @@ async function startGeneration(m) {
     const key=`job_${m.videoId}`;
     const previous=(await chrome.storage.local.get(key))[key];
     const cached=await cacheGet(m.videoId);if(cached?.transcript?.length&&!m.replace)return {success:true,transcript:cached.transcript,transcriptRevision:cached.transcriptRevision||'legacy',speakerNames:cached.speakerNames||{},source:cached.source,info:publicInfo(cached)};
-    if(previous?.jobId || ['submitting','uncertain'].includes(previous?.status))return {success:true,pending:true,...previous};
-    const settings=await getSettings();if(settings.transcriptionProvider==='volc')return startVolc(m,settings);if(!settings.supadataApiKey)throw new Error('请先在设置中填写 Supadata Key。');
+    const replaceFailed=m.replace&&previous?.status==='failed';
+    if(!replaceFailed&&(previous?.jobId || ['submitting','uncertain'].includes(previous?.status)))return {success:true,pending:true,...previous};
+    const settings=await getSettings();if(settings.transcriptionProvider==='volc')return startVolc({...m,...(replaceFailed?{replaceFailedJobId:previous.jobId}: {})},settings);if(!settings.supadataApiKey)throw new Error('请先在设置中填写 Supadata Key。');
     const info=await page(m.tabId,m.videoId,'getSources');
     if(info.transcript?.length)return acceptTranscript(m.videoId,info.transcript,info,'页面字幕');
     if(!info.ready)throw new Error('请先让视频正常播放，再生成逐字稿。');
@@ -211,20 +212,31 @@ async function pollVolc(m,job) {
       await chrome.storage.local.set({[key]:{...current,status:'running',...(job.whole?{submitFinished:true,stage:'recognize'}:{}),nextPollAt:Date.now()+10000}});
       return {success:true,pending:true,...progress};
     });
+    let recognition=null;
     if(job.whole){
       try {
         if(!Number.isFinite(data.durationMs)||Math.abs(data.durationMs/1000-job.audioDuration)>2)throw new Error('识别音频长度与完整音轨不一致，未保存结果。');
-        const ids=new Map();
+        const ids=new Map(),windows=new Map();
+        for(const r of data.transcript){
+          const start=Math.floor(r.start/600)*600;
+          if(!windows.has(start))windows.set(start,{start,segments:0,missing:0,unresolved:0,unsupported:0,voices:{}});
+          const w=windows.get(start);w.segments++;
+          if(r.localSpeaker===undefined)w[['unresolved','unsupported'].includes(r.voiceStatus)?r.voiceStatus:'missing']++;
+          else w.voices[r.localSpeaker]=(w.voices[r.localSpeaker]||0)+1;
+        }
         data.transcript=DYD_PARTS.merge([{offset:job.audioOffset,duration:job.audioDuration,rows:data.transcript.map(r=>{
           if(r.localSpeaker!==undefined&&!ids.has(r.localSpeaker))ids.set(r.localSpeaker,`s${ids.size+1}`);
           return {...r,speaker:ids.get(r.localSpeaker)||'unknown'};
         })}]);
+        recognition={method:'whole-recording',jobId:job.jobId,resourceId:job.resourceId,audioDuration:job.audioDuration,
+          returnedDuration:data.durationMs/1000,speakerOptions:job.speakerOptions||null,
+          voiceMapping:[...ids].map(([serviceVoice,speaker])=>({serviceVoice,speaker})),windows:[...windows.values()]};
       }catch(e){e.invalidTranscript=true;throw e;}
     }
     return await serialized(async()=>{
       const current=(await chrome.storage.local.get(key))[key];
       if(current?.jobId!==job.jobId)return {success:true,pending:true,stale:true};
-      const result=await writeTranscript(m.videoId,data.transcript,job.info,'火山语音转写',job.jobId);
+      const result=await writeTranscript(m.videoId,data.transcript,job.info,'火山语音转写',job.jobId,recognition);
       await chrome.storage.local.remove(key);return result;
     });
   } catch(e) {
@@ -262,7 +274,7 @@ async function saveNote(m) {
   return serialized(async()=>{
     const notes=(await chrome.storage.local.get('dyd_notes')).dyd_notes||[];
     if(notes.length>=1000)throw new Error('已保存 1000 条笔记，请导出并整理后继续。');
-    const note=namedNote({id:crypto.randomUUID(),videoId:m.videoId,videoTitle:cached?.title||m.videoTitle||'抖音视频',text,transcriptRevision:cached?.transcriptRevision||'legacy',...(segments.length?{segments}:{}),
+    const note=namedNote({id:crypto.randomUUID(),videoId:m.videoId,videoTitle:cached?.title||m.videoTitle||'抖音视频',text,kind:segments.length||m.quote||!m.text?'quote':'personal',transcriptRevision:cached?.transcriptRevision||'legacy',...(segments.length?{segments}:{}),
       seconds,...(speaker?{speaker}:{}),timestampedUrl:DYD.link(m.videoId,seconds),createdAt:Date.now()},cached?.speakerNames||{});
     notes.unshift(note);await chrome.storage.local.set({dyd_notes:notes});return {success:true,note};
   });
@@ -271,7 +283,7 @@ async function handle(m) {
   if(['identifySpeakers','resumeSpeakers','repairSpeakers'].includes(m.action))throw new Error('自动区分说话人暂未开放。已有逐字稿、姓名和笔记可继续使用。');
   if(m.videoId)DYD.canonical(m.videoId);
   switch(m.action) {
-    case 'runtimeCheck':{const s=await getSettings(),state=await checkAudioRuntime(s.volcResourceId);return {success:true,protocol:'whole-resource-3',resourceId:state.resourceId,busy:!!state.active};}
+    case 'runtimeCheck':{const s=await getSettings(),state=await checkAudioRuntime(s.volcResourceId);return {success:true,protocol:'whole-resource-5',resourceId:state.resourceId,busy:!!state.active};}
     case 'page':return page(m.tabId,m.videoId,m.command,{seconds:m.seconds});
     case 'sources':return loadSources(m);
     case 'provider':{const s=await getSettings();return {success:true,provider:s.transcriptionProvider,configured:!!(s.transcriptionProvider==='volc'?s.volcApiKey:s.supadataApiKey)};}

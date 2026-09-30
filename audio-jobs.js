@@ -9,7 +9,7 @@ async function checkAudioRuntime(resourceId){
  if(!['volc.bigasr.auc','volc.seedasr.auc'].includes(resourceId))throw new Error('无效的火山识别服务。');
  await ensureAudioDocument();
  const state=await chrome.runtime.sendMessage({target:'audio',action:'audioState',resourceId});
- if(!state?.success||state.protocol!=='whole-resource-3'||state.resourceId!==resourceId)throw new Error('插件更新尚未生效，请重新加载抖音精读后再试。未开始转写。');
+ if(!state?.success||state.protocol!=='whole-resource-5'||state.resourceId!==resourceId)throw new Error('插件更新尚未生效，请重新加载抖音精读后再试。未开始转写。');
  return state;
 }
 async function startAudioUpload(m,settings){
@@ -28,9 +28,21 @@ async function startAudioUpload(m,settings){
     condition:{urlFilter:'||douyinvod.com/',initiatorDomains:[chrome.runtime.id],resourceTypes:['xmlhttprequest'],requestMethods:['get']}}]});
   if(state?.active)throw new Error('另一个节目正在处理，请等它完成。');
   const key=`job_${m.videoId}`,job={provider:'volc-upload',resourceId,status:'running',replace:!!m.replace,jobId:crypto.randomUUID(),startedAt:Date.now(),heartbeatAt:Date.now(),info:publicInfo(info),completed:0,whole:!m.enrichSpeakers,speakers:!!m.enrichSpeakers,enrichSpeakers:!!m.enrichSpeakers};
-  await serialized(()=>chrome.storage.local.set({[key]:job}));
+  const reused=await serialized(async()=>{
+   const current=(await chrome.storage.local.get(key))[key];
+   // Only the explicit, already-confirmed replacement can retire a failed job.
+   // A query may have recovered it while media/preflight was being checked.
+   if(m.replaceFailedJobId!==undefined&&(!current||current.jobId!==m.replaceFailedJobId||current.status!=='failed'))return current||{completed:true};
+   const archive={};
+   if(m.replace&&current?.status==='failed'){
+    const attempt={};for(const field of ['jobId','provider','resourceId','status','startedAt','submitEndedAt','httpStatus','serviceCode','notSubmitted'])if(current[field]!==undefined)attempt[field]=current[field];
+    archive[`failed_attempt_${m.videoId}`]=attempt;
+   }
+   await chrome.storage.local.set({...archive,[key]:job});return null;
+  });
+  if(reused)return {success:true,pending:true,...reused};
   try {
-   const response=await chrome.runtime.sendMessage({target:'audio',action:'audioStart',protocol:'whole-resource-3',videoId:m.videoId,runId:job.jobId,resourceId:job.resourceId,mediaUrl:media,apiKey:settings.volcApiKey,speakers:job.speakers,whole:job.whole});
+   const response=await chrome.runtime.sendMessage({target:'audio',action:'audioStart',protocol:'whole-resource-5',videoId:m.videoId,runId:job.jobId,resourceId:job.resourceId,mediaUrl:media,apiKey:settings.volcApiKey,speakers:job.speakers,whole:job.whole});
    if(!response?.success)throw new Error(response?.error||'音频处理未能启动。');
   }catch(e){await chrome.storage.local.set({[key]:{...job,status:'failed',error:'音频处理未能启动，请稍后重试。'}});throw e;}
   return {success:true,pending:true};
@@ -58,8 +70,8 @@ async function pollAudioUpload(m,job){
 }
 async function audioMessage(m){
  if(m.action==='audioPreflight'){
-  if(m.protocol!=='whole-resource-3'||!['volc.bigasr.auc','volc.seedasr.auc'].includes(m.resourceId))throw new Error('插件运行模块不一致，未开始转写。');
-  return {success:true,protocol:'whole-resource-3',resourceId:m.resourceId};
+  if(m.protocol!=='whole-resource-5'||!['volc.bigasr.auc','volc.seedasr.auc'].includes(m.resourceId))throw new Error('插件运行模块不一致，未开始转写。');
+  return {success:true,protocol:'whole-resource-5',resourceId:m.resourceId};
  }
  DYD.canonical(m.videoId);
  return serialized(async()=>{
@@ -80,7 +92,7 @@ async function audioMessage(m){
    // when recovering; later settings changes must never redirect an existing job.
    const resourceId=job.resourceId||'volc.bigasr.auc';
    if(!['volc.bigasr.auc','volc.seedasr.auc'].includes(resourceId)||m.resourceId&&m.resourceId!==resourceId)throw new Error('音频任务的识别服务不一致，未提交转写。');
-   Object.assign(job,{provider:'volc',resourceId,stage:'upload',status:'submitting',submitStarted:Date.now(),submitFinished:false,audioDuration:m.duration,audioOffset:m.offset});
+   Object.assign(job,{provider:'volc',resourceId,stage:'upload',status:'submitting',submitStarted:Date.now(),submitFinished:false,audioDuration:m.duration,audioOffset:m.offset,speakerOptions:DYD_VOLC.speakerOptions(m.duration)});
    await chrome.storage.local.set({[key]:job});
    return {success:true,resourceId};
   }else if(m.action==='audioWholeSubmitted'){

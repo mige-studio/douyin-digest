@@ -93,7 +93,7 @@ test('runtime readiness checks both real message directions without media, ASR, 
  for(const resourceId of ['volc.bigasr.auc','volc.seedasr.auc']){
   const h=await createWholeMessageHarness({resourceId,store:{[`job_${videoId}`]:{jobId:'existing',resourceId:'volc.bigasr.auc',status:'running'},dyd_notes:[{text:'保留笔记'}]},fetcher:async()=>assert.fail('readiness must not use the network')});
   const before=JSON.stringify(h.store),ready=await h.ui('runtimeCheck');
-  assert.equal(ready.success,true);assert.equal(ready.protocol,'whole-resource-3');assert.equal(ready.resourceId,resourceId);
+  assert.equal(ready.success,true);assert.equal(ready.protocol,'whole-resource-5');assert.equal(ready.resourceId,resourceId);
   assert.equal(JSON.stringify(h.store),before);assert.equal(h.requests.length,0);
   assert.deepEqual(h.messages.map(m=>m.action),['audioState','audioPreflight']);
   assert.ok(h.messages.every(m=>!('apiKey'in m)&&!('mediaUrl'in m)));
@@ -101,11 +101,12 @@ test('runtime readiness checks both real message directions without media, ASR, 
 });
 
 test('old runtime protocols and a broken resource reply fail readiness before downloading or creating a job',async()=>{
- for(const fault of ['old-offscreen','old-background','missing-resource','wrong-resource']){
+ for(const fault of ['old-offscreen','old-background','previous-offscreen','missing-resource','wrong-resource']){
   const h=await createWholeMessageHarness({duration:30,mediaBytes:new Uint8Array([1,2,3]),wholeAudio:encodedRecording(30),store:{dyd_notes:[{text:'保留笔记'}]},
    transformSource:(file,source)=>{
-    if(fault==='old-offscreen'&&file==='offscreen.mjs')return source.replaceAll('whole-resource-3','whole-resource-2');
-    if(fault==='old-background'&&['background.js','audio-jobs.js'].includes(file))return source.replaceAll('whole-resource-3','whole-resource-2');
+    if(fault==='old-offscreen'&&file==='offscreen.mjs')return source.replaceAll('whole-resource-5','whole-resource-2');
+    if(fault==='old-background'&&['background.js','audio-jobs.js'].includes(file))return source.replaceAll('whole-resource-5','whole-resource-2');
+    if(fault==='previous-offscreen'&&file==='offscreen.mjs')return source.replaceAll('whole-resource-5','whole-resource-3');
     if(file==='background.js'&&fault==='missing-resource')return source.replace(',...(result.resourceId?{resourceId:result.resourceId}:{})','');
     if(file==='background.js'&&fault==='wrong-resource')return source.replace(',...(result.resourceId?{resourceId:result.resourceId}:{})',",...(result.resourceId?{resourceId:'volc.bigasr.auc'}:{})");
     return source;
@@ -115,5 +116,48 @@ test('old runtime protocols and a broken resource reply fail readiness before do
   const start=await h.ui('generate');assert.equal(start.success,false,fault);assert.match(start.error,/未开始转写/);
   assert.equal(h.requests.length,0,fault);assert.equal(h.job(),undefined,fault);assert.equal(JSON.stringify(h.store),before,fault);
   assert.ok(!h.messages.some(m=>m.action==='audioStart'),fault);
+ }
+});
+
+test('long interview selects long-audio SSD once and retains missing late voices as evidence',async()=>{
+ const duration=9258;let submits=0;
+ const late={audio_info:{duration:duration*1000},result:{utterances:[
+  {text:'开场问题',start_time:1000,end_time:5000,additions:{speaker:0}},
+  {text:'一小时后的同一声音',start_time:3601000,end_time:3605000,additions:{speaker:0}},
+  {text:'另一个声音',start_time:7201000,end_time:7205000,additions:{speaker:1}},
+  {text:'服务未返回声音编号',start_time:9253000,end_time:9257000}
+ ]}};
+ const h=await createWholeMessageHarness({videoId,duration,mediaBytes:new Uint8Array([1,2,3]),wholeAudio:encodedRecording(duration),
+  fetcher:async(url,request)=>{
+   if(url.endsWith('/submit')){submits++;const data=JSON.parse(await request.body.text());assert.equal(data.request.ssd_version,'200');assert.equal(data.request.ssd_mode,1);return response('20000000');}
+   return response('20000000',late);
+  }});
+ await h.ui('retranscribe');await h.waitForAudio();const frozen=h.job();
+ assert.equal(frozen.speakerOptions.ssd_mode,1);
+ const result=await h.ui('poll',{force:true});assert.deepEqual(result.transcript.map(r=>r.speaker),['s1','s1','s2','unknown']);
+ const record=(await h.ui('cache')).cache;assert.equal(record.recognition.jobId,frozen.jobId);
+ assert.equal(record.recognition.windows.at(-1).missing,1);assert.equal(record.recognition.voiceMapping[0].serviceVoice,'0');
+ await h.ui('generate');assert.equal(submits,1);
+});
+
+test('explicit retranscription replaces a failed attempt once while preserving old content and notes',async()=>{
+ const key=`job_${videoId}`,old={transcript:[{text:'旧稿',start:0,duration:2}]},notes=[{text:'旧笔记'}];let submits=0;
+ const h=await createWholeMessageHarness({videoId,duration:30,mediaBytes:new Uint8Array([1,2,3]),wholeAudio:encodedRecording(30),
+  store:{[key]:{jobId:'failed-old',provider:'volc',whole:true,status:'failed',apiKey:'never-archive'},[`digest_${videoId}`]:old,dyd_notes:notes},
+  fetcher:async url=>{assert.ok(url.endsWith('/submit'));submits++;return response('20000000');}});
+ await h.ui('retranscribe');await h.waitForAudio();
+ assert.notEqual(h.job().jobId,'failed-old');assert.equal(submits,1);
+ assert.equal(h.store[`failed_attempt_${videoId}`].jobId,'failed-old');assert.ok(!JSON.stringify(h.store[`failed_attempt_${videoId}`]).includes('never-archive'));
+ assert.deepEqual((await h.ui('cache')).cache.transcript,old.transcript);assert.deepEqual(h.store.dyd_notes,notes);
+ await h.ui('retranscribe');assert.equal(submits,1);
+});
+
+test('uncertain attempts and recovered failed attempts cannot be replaced or billed again',async()=>{
+ for(const recover of [false,true]){
+  const key=`job_${videoId}`;
+  const h=await createWholeMessageHarness({videoId,duration:30,store:{[key]:{jobId:'original',provider:'volc',whole:true,status:recover?'failed':'uncertain'}},
+   getSources:({store})=>{if(recover)store[key].status='running';return {};},fetcher:async()=>assert.fail('must reuse existing task')});
+  const result=await h.ui('retranscribe');assert.equal(result.jobId,'original');assert.equal(h.job().jobId,'original');
+  assert.equal(h.requests.length,0);assert.ok(!h.messages.some(m=>m.action==='audioStart'));
  }
 });

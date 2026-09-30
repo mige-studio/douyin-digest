@@ -7,6 +7,10 @@ let speakerNames={},transcriptRevision='legacy',speakerDialogRevision='legacy';
 const pending=new Set();
 let contextRetryAt=0,contextAttempts=0;
 function status(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);}
+function attributionStatus(){
+ const count=rows.filter(r=>r.speaker&&(!/^s\d+$/.test(r.speaker)||/待确认|未确认/.test(speakerNames[r.speaker]||''))).length;
+ return count?` 其中 ${count} 段说话人待确认，重要引用请回听。`:'';
+}
 async function send(action,data={},ctx=context){
   const result=await chrome.runtime.sendMessage({action,tabId:ctx?.tabId,videoId:ctx?.videoId,...data});
   if(!result?.success)throw new Error(result?.message||result?.error||'操作没有完成，请重试。');
@@ -52,7 +56,7 @@ async function checkContext(){
     try{
       const info=await send('page',{command:'getVideoInfo'},ctx);if(!scoped(ctx))return;
       $('videoTitle').textContent=displayTitle(info.title);$('videoAuthor').textContent=info.channelName||'';renderEngagement(info.engagement);
-      if(rows.length){status(cacheResult.lastAttemptFailed?'全文已完成，已恢复逐字稿；上次重新转写未完成，未影响已保存内容。':'全文已完成，已恢复逐字稿与阅读位置。');if(cacheResult.pending||cacheResult.speakersPending)await poll(ctx);return;}
+      if(rows.length){status((cacheResult.lastAttemptFailed?'全文已完成，已恢复逐字稿；上次重新转写未完成，未影响已保存内容。':'全文已完成，已恢复逐字稿与阅读位置。')+attributionStatus());if(cacheResult.pending||cacheResult.speakersPending)await poll(ctx);return;}
       await readSources(ctx);
     }catch(e){if(scoped(ctx)){
       if(contextAttempts<5){contextRetryAt=Date.now()+1500;status('视频正在加载，稍后自动读取…');}
@@ -76,7 +80,7 @@ async function loadTranscriptResult(result,ctx){
   if(!scoped(ctx))return;
   if(result.info){$('videoTitle').textContent=displayTitle(result.info.title);$('videoAuthor').textContent=result.info.channelName||'';renderEngagement(result.info.engagement);}
   rows=result.transcript;transcriptRevision=result.transcriptRevision||transcriptRevision;speakerNames=result.speakerNames||speakerNames;analysis=null;$('generation').hidden=true;renderProgress();$('source').textContent=result.source||'逐字稿';
-  renderTranscript();renderAnalysis();status(`全文已完成，共 ${rows.length} 段原话。`);
+  renderTranscript();renderAnalysis();status(`全文已完成，共 ${rows.length} 段原话。`+attributionStatus());
   if(activeTab==='overview')await analyze(ctx);
 }
 async function poll(ctx=context,repeat=true,force=false){
@@ -198,7 +202,7 @@ async function playback(force=false){
 async function copy(text){try{await navigator.clipboard.writeText(text);status('已复制。');}catch{status('复制失败，请使用导出。',true);}}
 function exportText(text,suffix){const blob=new Blob([text],{type:'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=`抖音精读-${context?.videoId||'全部'}-${suffix}.md`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function documentHeader(){return `# ${$('videoTitle').textContent}\n\n${context?DYD.canonical(context.videoId):''}\n\n`;}
-function transcriptExport(){return documentHeader()+rows.map(r=>`[${DYD.time(r.start)}](${DYD.link(context.videoId,r.start)}) ${r.speaker?speakerLabel(r.speaker)+'：':''}${r.text}`).join('\n\n');}
+function transcriptExport(){return documentHeader()+`逐字稿版本：${transcriptRevision}\n\n姓名为本期映射，不代表逐段听辨通过。${attributionStatus()}\n\n`+rows.map(r=>`[${DYD.time(r.start)}](${DYD.link(context.videoId,r.start)}) ${r.speaker?speakerLabel(r.speaker)+' · 声音 '+r.speaker+'：':''}${r.text}`).join('\n\n');}
 function hideSelection(){ $('selectionBar').hidden=true;selected=null; }
 function captureSelection(){
  const selection=window.getSelection();if(!selection?.rangeCount||selection.isCollapsed){hideSelection();return;}
@@ -280,7 +284,13 @@ $('exportOverview').onclick=()=>{
   if(!analysis)return status('请先生成内容概览。',true);
   exportText(documentHeader()+'## 内容章节\n\n'+(analysis.chapters||[]).map(c=>`### [${DYD.time(c.timestampSeconds)}](${DYD.link(context.videoId,c.timestampSeconds)}) ${c.title}\n\n${c.summary}`).join('\n\n')+'\n\n## 关键观点\n\n'+(analysis.keyQuotes||[]).map(q=>`[${DYD.time(q.timestampSeconds)}](${DYD.link(context.videoId,q.timestampSeconds)}) ${q.quote}`).join('\n\n'),'概览');
 };
-function notesExport(){return '# 抖音精读笔记\n\n'+visibleNotes().map(n=>`## ${n.videoTitle}\n\n`+(n.segments?.length?n.segments.map(s=>`[${DYD.time(s.start)}](${DYD.link(n.videoId,s.start)})${s.speakerName?' · '+s.speakerName:''}\n\n${s.text}`).join('\n\n'):`[${DYD.time(n.seconds)}](${DYD.link(n.videoId,n.seconds)})${n.speakerName?' · '+n.speakerName:''}\n\n${n.text}`)).join('\n\n');}
+function notesExport(){
+ const label=s=>(s.speakerName?' · '+s.speakerName:'')+(s.speaker?' · 声音 '+s.speaker:'');
+ return '# 抖音精读笔记\n\n'+visibleNotes().map(n=>`## ${n.videoTitle}\n\n笔记来源版本：${n.transcriptRevision||'legacy'}\n\n`+
+   (n.kind==='personal'?'个人笔记\n\n':n.kind==='quote'?'原话摘录\n\n':'既有笔记（类型未记录）\n\n')+
+   (n.segments?.length?n.segments.map(s=>`[${DYD.time(s.start)}](${DYD.link(n.videoId,s.start)})${label(s)}\n\n${s.text}`).join('\n\n'):
+    `[${DYD.time(n.seconds)}](${DYD.link(n.videoId,n.seconds)})${label(n)}\n\n${n.text}`)).join('\n\n');
+}
 $('exportNotes').onclick=()=>exportText(notesExport(),'笔记');
 let transcriptScroll=0;
 function switchTab(name){

@@ -49,6 +49,8 @@ The extension includes no API credit. Provider data handling and fees remain sub
 
 Speaker labels group voices within the current recording. They are not face recognition and do not create a cross-video identity. Overlapping speech, poor audio, or similar voices may reduce accuracy. Verify important quotations by seeking to the timestamp.
 
+Reading captions again uses existing captions or cached text. Use **Retranscribe (with speakers)** to recognize the audio again. A whole recording is submitted once; uncertain submissions are queried using the original job. Volcengine standard recognition explicitly uses its long-audio speaker mode for non-meeting recordings longer than three minutes. Names still require verification.
+
 ## Local library
 
 Open **My Library** from the side panel or from Settings. Choose a root folder, then save all items or one video. Files are organized as:
@@ -63,6 +65,10 @@ Chosen folder/
 ```
 
 Identical content is not written twice. Changed content is saved as a numbered copy without overwriting older files. Browser library entries and disk files are not automatically synchronized; files are written only after an explicit save action.
+
+Saved transcripts retain the source link, seek timestamps, episode-local voice IDs, name mappings, unresolved labels, and transcript revision. New recognition results also retain duration, speaker parameters, and voice counts by time window. Evidence unavailable in older transcripts is marked as unavailable. Notes retain their original revision so a new recognition result cannot silently reassign an old quotation to a different person.
+
+After saving, expand the saved-files view to read the actual file back. Give the transcript file path to an AI assistant as a text source and cite personal notes separately. The extension does not invoke Codex or run assistant skills automatically.
 
 ## Supported scope
 

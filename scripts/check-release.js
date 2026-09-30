@@ -5,6 +5,8 @@ files.push('library-config.js','library-core.js','library-db.js','library-backgr
 function check(){
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8')),pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
  assert.equal(manifest.name,'抖音精读');assert.equal(manifest.version,pkg.version);assert.equal(manifest.manifest_version,3);
+ assert.match(manifest.version,/^\d+\.\d+\.\d+$/);
+ if(manifest.version_name){assert.match(manifest.version_name,/^\d+\.\d+\.\d+(?:-rc\.[1-9]\d*)?$/);assert.equal(manifest.version_name.split('-')[0],manifest.version);}
  assert.deepEqual(manifest.permissions,['sidePanel','storage','tabs','offscreen','declarativeNetRequestWithHostAccess']);
  assert.deepEqual(manifest.host_permissions,['https://www.douyin.com/*','https://api.supadata.ai/*','https://api.deepseek.com/*','https://ark.cn-beijing.volces.com/*','https://openspeech.bytedance.com/*','https://*.douyinvod.com/*']);
  for(const file of files){const full=path.join(root,file);assert.ok(fs.statSync(full).isFile());

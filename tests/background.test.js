@@ -185,7 +185,7 @@ test('new Volc generation starts one offscreen upload with scoped referrer and n
  const h=harness();h.store.dyd_settings={volcApiKey:'placeholder-only'};let starts=0,rules;
  h.ctx.chrome.runtime.getContexts=async()=>[];h.ctx.chrome.offscreen={createDocument:async args=>assert.equal(args.reasons[0],'BLOBS')};
  h.ctx.chrome.declarativeNetRequest={updateSessionRules:async value=>rules=value};
- h.ctx.chrome.runtime.sendMessage=async m=>{if(m.action==='audioState')return {success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null};assert.equal(m.target,'audio');assert.equal(m.apiKey,'placeholder-only');assert.equal(m.speakers,false);starts++;return {success:true};};
+ h.ctx.chrome.runtime.sendMessage=async m=>{if(m.action==='audioState')return {success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null};assert.equal(m.target,'audio');assert.equal(m.apiKey,'placeholder-only');assert.equal(m.speakers,false);starts++;return {success:true};};
  await Promise.all([h.call('generate'),h.call('generate')]);assert.equal(starts,1);assert.equal(h.store['job_'+id].provider,'volc-upload');
  assert.deepEqual(Array.from(rules.addRules[0].condition.initiatorDomains),['test-id']);assert.equal(rules.addRules[0].condition.urlFilter,'||douyinvod.com/');
  assert.ok(!JSON.stringify(h.store['job_'+id]).includes('placeholder-only'));assert.ok(!JSON.stringify(h.store['job_'+id]).includes('signed='));
@@ -244,7 +244,7 @@ test('normal whole recording freezes selected service through download, submit c
   h.ctx.chrome.declarativeNetRequest={updateSessionRules:async()=>{}};
   let start;
   h.ctx.chrome.runtime.sendMessage=async m=>{
-   if(m.action==='audioState')return {success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null};
+   if(m.action==='audioState')return {success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null};
    start=m;
    assert.equal(h.store['job_'+id].resourceId,resourceId);
    assert.equal(h.store['job_'+id].jobId,m.runId);
@@ -279,22 +279,22 @@ test('real offscreen message reply preserves the service frozen before upload',a
 test('runtime preflight checks the running audio module without ASR, a job or secrets',async()=>{
  const h=harness();h.store.dyd_settings={volcApiKey:'private-test',volcResourceId:'volc.seedasr.auc'};
  h.ctx.chrome.runtime.getContexts=async()=>[{}];
- h.ctx.chrome.runtime.sendMessage=async m=>{assert.equal(m.action,'audioState');return {success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null};};
+ h.ctx.chrome.runtime.sendMessage=async m=>{assert.equal(m.action,'audioState');return {success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null};};
  const before=JSON.stringify(h.store),result=await h.call('runtimeCheck');
- assert.equal(result.protocol,'whole-resource-3');assert.equal(result.resourceId,'volc.seedasr.auc');assert.equal(result.busy,false);
+ assert.equal(result.protocol,'whole-resource-5');assert.equal(result.resourceId,'volc.seedasr.auc');assert.equal(result.busy,false);
  assert.equal(JSON.stringify(h.store),before);assert.equal(h.requests.length,0);assert.ok(!JSON.stringify(result).includes('private-test'));
 });
 test('runtime preflight responds through the real message listener from an extension UI tab',async()=>{
  for(const path of ['options.html','sidepanel.html?video=1']){
   const h=harness();h.store.dyd_settings={volcApiKey:'private-test',volcResourceId:'volc.seedasr.auc'};
   h.ctx.chrome.runtime.getContexts=async()=>[{}];
-  h.ctx.chrome.runtime.sendMessage=async m=>({success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null});
+  h.ctx.chrome.runtime.sendMessage=async m=>({success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null});
   const before=JSON.stringify(h.store),url=h.ctx.chrome.runtime.getURL(path);
   const result=await new Promise(resolve=>{
    assert.equal(h.listeners.message({action:'runtimeCheck'},{id:'test-id',url,tab:{id:7,url}},resolve),true);
   });
   assert.equal(result.success,true);assert.equal(result.resourceId,'volc.seedasr.auc');
-  assert.equal(result.protocol,'whole-resource-3');assert.equal(result.busy,false);
+  assert.equal(result.protocol,'whole-resource-5');assert.equal(result.busy,false);
   assert.equal(JSON.stringify(h.store),before);assert.equal(h.requests.length,0);
   assert.ok(!JSON.stringify(result).includes('private-test'));
  }
@@ -302,13 +302,13 @@ test('runtime preflight responds through the real message listener from an exten
 test('runtime preflight accepts the browser-owned UI tab URL when sender URL is absent',async()=>{
  const h=harness();h.store.dyd_settings={volcApiKey:'private-test',volcResourceId:'volc.seedasr.auc'};
  h.ctx.chrome.runtime.getContexts=async()=>[{}];
- h.ctx.chrome.runtime.sendMessage=async m=>({success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null});
+ h.ctx.chrome.runtime.sendMessage=async m=>({success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null});
  const url=h.ctx.chrome.runtime.getURL('options.html');
  const result=await new Promise(resolve=>{
   assert.equal(h.listeners.message({action:'runtimeCheck'},{id:'test-id',tab:{id:7,url}},resolve),true);
  });
  assert.equal(result.success,true);assert.equal(result.resourceId,'volc.seedasr.auc');
- assert.equal(result.protocol,'whole-resource-3');assert.equal(result.busy,false);
+ assert.equal(result.protocol,'whole-resource-5');assert.equal(result.busy,false);
  assert.equal(h.requests.length,0);assert.ok(!JSON.stringify(result).includes('private-test'));
 });
 test('ordinary page tabs cannot impersonate the extension UI by tab URL or similar paths',()=>{
@@ -368,7 +368,7 @@ test('late success, pending or failure from a reset query cannot overwrite the n
   const oldQuery=h.call('poll',{force:true});await fetchEntered;
   await h.call('resetJob');
   h.ctx.chrome.runtime.getContexts=async()=>[{}];h.ctx.chrome.declarativeNetRequest={updateSessionRules:async()=>{}};
-  h.ctx.chrome.runtime.sendMessage=async m=>m.action==='audioState'?{success:true,protocol:'whole-resource-3',resourceId:m.resourceId,active:null}:{success:true};
+  h.ctx.chrome.runtime.sendMessage=async m=>m.action==='audioState'?{success:true,protocol:'whole-resource-5',resourceId:m.resourceId,active:null}:{success:true};
   await h.call('retranscribe');const newJob=structuredClone(h.store[key]);assert.notEqual(newJob.jobId,'old-failed');
   resolveFetch({ok:true,status:200,headers:{get:k=>k==='X-Api-Status-Code'?({success:'20000000',pending:'20000002','not-found':'45000000'}[finish]):k==='X-Api-Message'?'cannot find task':null},text:async()=>JSON.stringify({audio_info:{duration:50000},result:{utterances:[{text:'不应覆盖的迟到结果',start_time:0,end_time:1000,additions:{speaker:'1'}}]}})});
   const reply=await oldQuery;assert.equal(reply.stale,true);assert.equal(reply.transcript,undefined);
